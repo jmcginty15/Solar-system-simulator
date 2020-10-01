@@ -1,0 +1,4 @@
+DateTime==4.3
+julian==0.14
+pytz==2020.1
+zope.interface==5.1.1
