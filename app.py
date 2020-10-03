@@ -1,6 +1,8 @@
 from flask import Flask, request, render_template, redirect, flash, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from models import db, connect_db, System, Object, AltName
+from functions import get_obj_batch, get_obj_vectors
+import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yeet'
@@ -13,3 +15,11 @@ debug = DebugToolbarExtension(app)
 connect_db(app)
 db.create_all()
 
+@app.route('/')
+def home():
+    return render_template('base.html')
+
+@app.route('/object/<int:obj_id>')
+def get_object(obj_id):
+    date = datetime.datetime(2017, 10, 3, 7, 47)
+    return jsonify(get_obj_vectors(obj_id, 0, date))

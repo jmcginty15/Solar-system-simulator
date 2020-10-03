@@ -12,7 +12,7 @@ def get_obj_vectors(id, center, datetime):
     vec_table = nasa_obj.vectors()
     pos = [au_to_km(vec_table['x'][0]), au_to_km(vec_table['y'][0]), au_to_km(vec_table['z'][0])]
     vel = [au_to_km(vec_table['vx'][0], vel=True), au_to_km(vec_table['vy'][0], vel=True), au_to_km(vec_table['vz'][0], vel=True)]
-    
+
     database_obj = Object.query.get_or_404(id)
     size = [database_obj.radius_x, database_obj.radius_y, database_obj.radius_z]
 
@@ -21,7 +21,7 @@ def get_obj_vectors(id, center, datetime):
                  'designation': database_obj.designation,
                  'obj_type': database_obj.obj_type,
                  'sat_type': database_obj.sat_type,
-                 'alt_names': database_obj.alt_names,
+                #  'alt_names': database_obj.alt_names,
                  'mass': database_obj.mass,
                  'dimensions': size,
                  'position': pos,
@@ -44,7 +44,7 @@ def get_obj_batch(obj_ids, center, datetime):
 
 def test_barycenter_func():
     """Function to set up a test for barycenter method"""
-    date = datetime.datetime(2020, 10, 1, 21, 18)
+    date = datetime.datetime(2017, 10, 1, 21, 18)
     pluto_sys = System.query.get(9)
     ids = [obj.id for obj in pluto_sys.objects]
     return get_obj_batch(ids, 0, date)

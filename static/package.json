@@ -1,0 +1,24 @@
+{
+  "name": "capstone-1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "three": "^0.121.1",
+    "three-fly-controls": "^2.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmcginty15/Solar-system-simulator.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jmcginty15/Solar-system-simulator/issues"
+  },
+  "homepage": "https://github.com/jmcginty15/Solar-system-simulator#readme"
+}
