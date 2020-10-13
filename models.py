@@ -54,6 +54,18 @@ class Object(db.Model):
     radius_x = db.Column(db.Float)
     radius_y = db.Column(db.Float)
     radius_z = db.Column(db.Float)
+    rotation_period = db.Column(db.Float)
+    solstice_angle = db.Column(db.Float, default=0)
+    axial_tilt = db.Column(db.Float, default=0)
+    inclination = db.Column(db.Float, default=0)
+    long_asc = db.Column(db.Float, default=0)
+    color_map = db.Column(db.String())
+    bump_map = db.Column(db.String())
+    specular_map = db.Column(db.String())
+    cloud_map = db.Column(db.String())
+    ring_color = db.Column(db.String())
+    ring_transparency = db.Column(db.String())
+    bump_scale = db.Column(db.Float)
     system_id = db.Column(db.Integer, db.ForeignKey('Systems.id'), nullable=True)
     system = db.relationship('System', backref='objects')
 
@@ -72,4 +84,3 @@ class AltName(db.Model):
 
     def __repr__(self):
         return f'<AltName name: {self.name}>'
-        

@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, flash, jsonify
+from flask import Flask, request, render_template, redirect, flash, jsonify, send_file
 from flask_debugtoolbar import DebugToolbarExtension
 from models import db, connect_db, System, Object, AltName
 from functions import get_obj_batch, get_obj_vectors
@@ -21,5 +21,16 @@ def home():
 
 @app.route('/object/<int:obj_id>')
 def get_object(obj_id):
-    date = datetime.datetime(2017, 10, 3, 7, 47)
+    date = datetime.datetime(2000, 12, 22, 1, 41)       # 2000-06-21T01:41
     return jsonify(get_obj_vectors(obj_id, 0, date))
+
+@app.route('/objects/<int:sys_id>')
+def get_objects(sys_id):
+    date = datetime.datetime(2000, 12, 22, 1, 41)
+    sys = System.query.get(sys_id)
+    ids = [obj.id for obj in sys.objects]
+    return jsonify(get_obj_batch(ids, 0, date))
+
+@app.route('/images/<path:img_path>')
+def get_image(img_path):
+    return send_file(f'images/{img_path}')
