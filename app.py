@@ -34,3 +34,7 @@ def get_objects(sys_id):
 @app.route('/images/<path:img_path>')
 def get_image(img_path):
     return send_file(f'images/{img_path}')
+
+@app.route('/barnes-hut-test')
+def test():
+    return render_template('barnes-hut-test.html')
