@@ -1,5 +1,3 @@
-const G = 6.67408e-20 // km3/(kg*s2)
-
 class Body {
     constructor(obj) {
         this.designation = obj.designation;

@@ -38,3 +38,10 @@ def get_image(img_path):
 @app.route('/barnes-hut-test')
 def test():
     return render_template('barnes-hut-test.html')
+
+@app.route('/barnes-hut-test/bodies')
+def test2():
+    date = datetime.datetime(2000, 1, 1, 0, 0)
+    objs = Object.query.all()
+    ids = [obj.id for obj in objs]
+    return jsonify(get_obj_batch(ids, 0, date))
