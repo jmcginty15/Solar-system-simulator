@@ -4,7 +4,8 @@ import { OrbitControls } from './node_modules/three/examples/jsm/controls/OrbitC
 import { Mesh } from './node_modules/three/src/Three.js';
 
 $(async function () {
-    const G = 6.67408e-20 // km3/(kg*s2)
+    // const G = 6.67408e-20 // km3/(kg*s2)
+    let go = false;
 
     const viewport = document.getElementById('viewport');
     const scene = new THREE.Scene();
@@ -15,12 +16,12 @@ $(async function () {
 
     const flyControls = new FlyControls(camera, viewport);
     flyControls.dragToLook = true;
-    flyControls.movementSpeed = 1000;
+    flyControls.movementSpeed = 10000;
 
     // const orbitControls = new OrbitControls(camera, viewport);
     // orbitControls.enableZoom = true;
 
-    var skySphere = new THREE.SphereGeometry(24000000000, 256, 256);
+    var skySphere = new THREE.SphereGeometry(24000000000, 32, 32);
     var milkyWay = new THREE.TextureLoader().load('/images/background/ESO_-_Milky_Way.jpg');
     milkyWay.anisotropy = renderer.capabilities.getMaxAnisotropy();
     milkyWay.flipY = false;
@@ -32,17 +33,29 @@ $(async function () {
 
     let obj1 = 0;
     let obj2 = 0;
+    const sceneBodies = [];
 
     var axes = new THREE.AxesHelper(100000000000);
     scene.add(axes);
 
-    var res = await axios.get(`http://127.0.0.1:5000/object/${10}`);
-    var sun = res.data;
+    // var res = await axios.get(`http://127.0.0.1:5000/object/${10}`);
+    // var sun = res.data;
 
-    res = await axios.get(`http://127.0.0.1:5000/object/${399}`);
-    var sys = res.data;
-    plotOrbit(sys, sun);
-    const system = [sys];
+    // res = await axios.get(`http://127.0.0.1:5000/object/${399}`);
+    // var sys = res.data;
+    // plotOrbit(sys, sun);
+    // const system = [sys];
+
+    var res = await axios.get('http://127.0.0.1:5000/bodies');
+    const sys = res.data;
+    var sun = sys[0];
+    var earth = sys[1];
+    plotOrbit(earth, sun);
+
+    const system = [];
+    for (let body of sys) {
+        system.push(new Body(body));
+    }
 
     var sunLight = new THREE.PointLight(0xffffff, 1);
     sunLight.position.set(sun.position[0], sun.position[1], sun.position[2]);
@@ -51,46 +64,67 @@ $(async function () {
     var starLight = new THREE.AmbientLight(0x404040, 0.5);
     scene.add(starLight);
 
-    system.unshift(sun);
+    // system.unshift(sun);
 
     for (let obj of system) {
         addToScene(obj);
     }
 
     const cameraZPos = system[1].position[2] + avgRadius(system[1]) * 3
-    camera.position.set(system[1].position[0], system[1].position[1], cameraZPos);
+    camera.position.set(system[1].position[0], system[1].position[1], system[1].position[2] + 20000000);
+    // camera.position.set(0, 0, 500000000);
     // camera.position.set(0, 0, 0);    
     var render = function () {
         requestAnimationFrame(render);
-        // object.rotation.x += 0.05;
-        var newAcc = obj1.acceleration = accVector(system[0], system[1]);
-        var newVel = obj1.updateVelocity(86400 / 2);
-        var newPos = obj1.updatePosition(86400 / 2);
 
-        // console.log(newAcc);
-        // console.log(newVel);
-        // console.log(newPos);
+        if (go) {
+            const sysTree = new Tree([-2e10, -2e10, -2e10], 4e10);
 
-        console.log(Math.atan2(newPos[1], newPos[0]) * (180 / Math.PI));
+            for (let body of system) {
+                sysTree.addBody(body);
+            }
 
-        // obj2.rotation.z += 0.005;
-        obj2.position.set(newPos[0], newPos[1], newPos[2]);
-        camera.position.set(newPos[0], newPos[1], cameraZPos);
-        // console.log(obj2.position);
+            for (let body of system) {
+                body.force = sysTree.getForceVector(body, 0);
+                body.updateAcceleration();
+                body.updateVelocity(60);
+                body.updatePosition(60);
+            }
+
+            for (let i = 0; i < system.length; i++) {
+                sceneBodies[i].position.set(system[i].position[0], system[i].position[1], system[i].position[2]);
+            }
+            
+            // object.rotation.x += 0.05;
+            // var newAcc = obj1.acceleration = accVector(system[0], system[1]);
+            // var newVel = obj1.updateVelocity(60);
+            // var newPos = obj1.updatePosition(60);
+
+            // console.log(newAcc);
+            // console.log(newVel);
+            // console.log(newPos);
+
+            // console.log(Math.atan2(newPos[1], newPos[0]) * (180 / Math.PI));
+
+            // obj2.rotation.z += 0.005;
+            // obj2.position.set(newPos[0], newPos[1], newPos[2]);
+            camera.position.set(system[1].position[0], system[1].position[1], system[1].position[2] + 2000000);
+            // console.log(obj2.position);
+        }
 
         flyControls.update(1);
         // orbitControls.update();
         renderer.render(scene, camera);
     };
 
-    // render();
+    render();
 
     function avgRadius(obj) {
         return obj.dimensions.reduce((a, b) => a + b) / obj.dimensions.length;
     }
 
     function plotOrbit(obj, orbiting) {
-        const newObj = new Planet(obj);
+        const newObj = new Body(obj);
 
         if (obj.id === 399) {
             obj1 = newObj;
@@ -130,7 +164,7 @@ $(async function () {
         var py = obj.position[1];
         var pz = obj.position[2];
 
-        var geometry = new THREE.SphereGeometry(rx, 256, 256);
+        var geometry = new THREE.SphereGeometry(rx, 32, 32);
         geometry.scale(1, yScale, zScale);
         geometry.rotateX(Math.PI / 2);
         // geometry.scale(10, 10, 10);
@@ -173,6 +207,11 @@ $(async function () {
             obj2 = object;
         }
 
+        sceneBodies.push(object);
         scene.add(object);
     }
+
+    $('#start').on('click', function () {
+        go = true;
+    });
 });

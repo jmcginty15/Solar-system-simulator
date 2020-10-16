@@ -10,6 +10,7 @@ class Body {
         this.position = obj.position;
         this.velocity = obj.velocity;
         this.acceleration = [0, 0, 0];
+        this.force = [0, 0, 0];
         this.solstice_angle = obj.solstice_angle;
         this.axial_tilt = obj.axial_tilt;
         this.inclination = obj.inclination;
@@ -21,6 +22,17 @@ class Body {
         this.ring_color = obj.ring_color;
         this.ring_transparency = obj.ring_transparency;
         this.bump_scale = obj.bump_scale
+    }
+
+    updateAcceleration() {
+        // updates the object's acceleration vector using the calculated force vector and returns the new acceleration vector
+        const force = this.force;
+        const x = force[0] / this.mass;
+        const y = force[1] / this.mass;
+        const z = force[2] / this.mass;
+        const newAcc = [x, y, z];
+        this.acceleration = newAcc;
+        return newAcc;
     }
 
     updateVelocity(tStep) {
