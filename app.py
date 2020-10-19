@@ -21,18 +21,27 @@ def home():
 
 @app.route('/object/<int:obj_id>')
 def get_object(obj_id):
-    date = datetime.datetime(2000, 12, 22, 1, 41)
+    date = datetime.datetime(2000, 6, 21, 12, 0)
     return jsonify(get_obj_vectors(obj_id, 0, date))
 
 @app.route('/bodies')
 def get_bodies():
-    date = datetime.datetime(2000, 12, 22, 1, 41)
+    date = datetime.datetime(2000, 7, 16, 12, 0)
     ids = [10, 599]
-    for i in range(501, 573):
-        ids.append(i)
-    for i in range(55501, 55508):
-        ids.append(i)
-    # ids = [10, 399, 301]
+    # for i in range(601, 654):
+    #     ids.append(i)
+    # ids.append(65035)
+    # ids.append(65040)
+    # ids.append(65041)
+    # ids.append(65045)
+    # ids.append(65048)
+    # ids.append(65050)
+    # ids.append(65055)
+    # ids.append(65056)
+    # for i in range(65065, 65082):
+    #     ids.append(i)
+    # ids.append(65083)
+    # ids.append(65084)
     return jsonify(get_obj_batch(ids, 0, date))
 
 @app.route('/objects/<int:sys_id>')

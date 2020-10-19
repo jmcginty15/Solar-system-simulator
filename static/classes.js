@@ -2,6 +2,7 @@ class Body {
     constructor(obj) {
         this.designation = obj.designation;
         this.dimensions = obj.dimensions;
+        this.rotation_period = obj.rotation_period;
         this.id = obj.id;
         this.mass = obj.mass;
         this.name = obj.name;
@@ -15,10 +16,13 @@ class Body {
         this.axial_tilt = obj.axial_tilt;
         this.inclination = obj.inclination;
         this.long_asc = obj.long_asc;
+        this.ring_inner_radius = obj.ring_inner_radius;
+        this.ring_outer_radius = obj.ring_outer_radius;
         this.color_map = obj.color_map;
         this.bump_map = obj.bump_map;
         this.specular_map = obj.specular_map;
         this.cloud_map = obj.cloud_map;
+        this.cloud_transparency = obj.cloud_transparency;
         this.ring_color = obj.ring_color;
         this.ring_transparency = obj.ring_transparency;
         this.bump_scale = obj.bump_scale
