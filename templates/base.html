@@ -4,14 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/static/app.css">
     <title>Simulator</title>
 </head>
 
-<body style="margin: 0px;">
-    <div id="viewport"></div>
-    <button id="start">Start</button>
+<body>
+    <div id="viewport">
+        <div id="left-controls" class="control-box">
+            Date controls<br>
+            Simulation controls<br>
+            Object information
+        </div>
+        <div id="right-controls" class="control-box">
+            Object selection menu
+        </div>
+    </div>
+    <!-- <button id="start">Start</button>
     <button id="look">Look</button>
-    <input id="body-id" type="text">
+    <input id="body-id" type="text"> -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"
         integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/axios/dist/axios.js"></script>

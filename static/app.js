@@ -14,6 +14,8 @@ $(async function () {
     camera.up = new THREE.Vector3(0, 0, 1);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    // viewport.style.height = window.innerHeight;
+    // viewport.style.width = window.innerWidth;
     renderer.sortObjects = false;
     viewport.appendChild(renderer.domElement);
 
@@ -66,18 +68,14 @@ $(async function () {
         system.push(new Body(body));
     }
 
-    var sunLight = new THREE.PointLight(0xffffff, 1);
-    sunLight.position.set(sun.position[0], sun.position[1], sun.position[2]);
-    scene.add(sunLight);
-
     // var starLight = new THREE.AmbientLight(0x404040, 0.5);
     // scene.add(starLight);
 
     // system.unshift(sun);
 
-    for (let obj of system) {
-        addToScene(obj);
-    }
+    // for (let obj of system) {
+    //     addToScene(obj);
+    // }
 
     let i = 0;
     let time = 0;
@@ -233,13 +231,41 @@ $(async function () {
             material.reflectivity = 1;
         }
 
-        if (obj.id === 10) {
-            obj.emissive = new THREE.Color(0xffffff);
-            obj.emissiveIntensity = 10;
-        }
-
         var object = new THREE.Mesh(geometry, material);
         object.add(new THREE.AxesHelper(10000000));
+
+        if (obj.id === 10) {
+            var sunLight = new THREE.PointLight(0xffffff, 1);
+            sunLight.position.set(obj.position[0], obj.position[1], obj.position[2]);
+            sunLight.castShadow = true;
+            object.add(sunLight);
+            object.castShadow = false;
+            object.receiveShadow = false;
+            object.emissive = new THREE.Color(0xffffff);
+            object.emissiveIntensity = 10;
+
+            const spotLight1 = new THREE.SpotLight(0xffffff, 10, 696340 * 15, Math.PI / 2);
+            spotLight1.position.set(obj.position[0] + 696340 * 10, obj.position[1], obj.position[2]);
+            const spotLight2 = new THREE.SpotLight(0xffffff, 10, 696340 * 15, Math.PI / 2);
+            spotLight2.position.set(obj.position[0] - 696340 * 10, obj.position[1], obj.position[2]);
+            const spotLight3 = new THREE.SpotLight(0xffffff, 10, 696340 * 15, Math.PI / 2);
+            spotLight3.position.set(obj.position[0], obj.position[1] + 696340 * 10, obj.position[2]);
+            const spotLight4 = new THREE.SpotLight(0xffffff, 10, 696340 * 15, Math.PI / 2);
+            spotLight4.position.set(obj.position[0], obj.position[1] - 696340 * 10, obj.position[2]);
+            const spotLight5 = new THREE.SpotLight(0xffffff, 10, 696340 * 15, Math.PI / 2);
+            spotLight5.position.set(obj.position[0], obj.position[1], obj.position[2] + 696340 * 10);
+            const spotLight6 = new THREE.SpotLight(0xffffff, 10, 696340 * 15, Math.PI / 2);
+            spotLight6.position.set(obj.position[0], obj.position[1], obj.position[2] - 696340 * 10);
+            object.add(spotLight1);
+            object.add(spotLight2);
+            object.add(spotLight3);
+            object.add(spotLight4);
+            object.add(spotLight5);
+            object.add(spotLight6);
+        } else {
+            object.castShadow = true;
+            object.receiveShadow = true;
+        }
 
         if (obj.ring_inner_radius) {
             addRings(obj, object);
@@ -307,6 +333,8 @@ $(async function () {
         ringMaterial.transparent = true;
         const ringDisc = new THREE.Mesh(ringGeometry, ringMaterial);
         ringDisc.material.side = THREE.DoubleSide;
+        ringDisc.castShadow = true;
+        ringDisc.receiveShadow = true;
 
         sceneObject.add(ringDisc);
     }

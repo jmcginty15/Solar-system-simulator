@@ -1,0 +1,46 @@
+* {
+    margin: 0px;
+    padding: 0px;
+    overflow: hidden;
+    /* height: 100%;
+    display: flex; */
+}
+
+body {
+    height: 100%;
+    display: flex;
+}
+
+#viewport {
+    padding: 0px;
+    margin: 0px;
+    height: 100%;
+    display: flex;
+}
+
+.control-box {
+    height: 90%;
+    width: 15%;
+    position: fixed;
+    display: block;
+    color: white;
+    background-color: black;
+    opacity: 0.25;
+    border-color: white;
+    border-style: solid;
+    border-radius: 15px;
+    z-index: 10;
+    margin: 10px;
+    padding: 10px;
+    object-fit: cover;
+}
+
+.control-box:hover {
+    opacity: 0.75;
+}
+
+#right-controls {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+}
