@@ -2,8 +2,7 @@
     margin: 0px;
     padding: 0px;
     overflow: hidden;
-    /* height: 100%;
-    display: flex; */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
@@ -16,10 +15,15 @@ body {
     margin: 0px;
     height: 100%;
     display: flex;
+    z-index: 0;
+}
+
+#overlay {
+    z-index: 10;
 }
 
 .control-box {
-    height: 90%;
+    height: 94%;
     width: 15%;
     position: fixed;
     display: block;
@@ -27,12 +31,15 @@ body {
     background-color: black;
     opacity: 0.25;
     border-color: white;
-    border-style: solid;
+    border-style: outset;
     border-radius: 15px;
     z-index: 10;
     margin: 10px;
     padding: 10px;
+    padding-top: 0px;
     object-fit: cover;
+    display: flex;
+    flex-direction: column;
 }
 
 .control-box:hover {
@@ -43,4 +50,99 @@ body {
     position: absolute;
     right: 0px;
     top: 0px;
+}
+
+#left-controls {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 20%;
+}
+
+#sim-select, #sim-info, #object-info {
+    border-color: white;
+    border-style: inset;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+#object-info {
+    flex-grow: 1;
+}
+
+#sim-select {
+    padding-top: 0px;
+}
+
+#object-set, #object-select {
+    overflow-y: scroll;
+    background-color: black;
+    color: white;
+}
+
+#object-set, #object-select, #date {
+    width: 100%;
+}
+
+#time {
+    width: 75%;
+}
+
+option:checked {
+    color: black;
+    background-color: grey;
+}
+
+.menu-title {
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+#menu-info {
+    margin-top: 5px;
+    font-weight: normal;
+}
+
+.input-field {
+    margin-bottom: 5px;
+    background-color: black;
+    color: white;
+}
+
+#sim-select-submit {
+    width: 100%;
+    margin-top: 5px;
+}
+
+::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+button {
+    background-color: black;
+    color: white;
+    padding: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+#play-pause-container {
+    width: 20%;
+}
+
+#play-pause {
+    width: 100%;
+}
+
+.right-float {
+    float: right;
+}
+
+#controls {
+    margin-top: 5px;
+}
+
+#speed-slider {
+    background-color: grey;
 }

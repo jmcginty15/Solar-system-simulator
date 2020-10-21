@@ -26,7 +26,7 @@ def get_object(obj_id):
 
 @app.route('/bodies')
 def get_bodies():
-    date = datetime.datetime(2001, 6, 21, 12, 4, 46)
+    date = datetime.datetime(2000, 4, 19, 22, 47) #Jan 19 22:47
     ids = [10, 399, 301]
     # for i in range(601, 654):
     #     ids.append(i)

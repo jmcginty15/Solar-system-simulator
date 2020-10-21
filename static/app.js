@@ -291,7 +291,11 @@ $(async function () {
 
         // for Moon, apply rotation to align correct side with Earth
         if (obj.id === 301) {
-            object.rotation.z += Math.PI / 1.59;
+            const earth = getBodyById(399);
+            const relX = earth.position[0] - obj.position[0];
+            const relY = earth.position[1] - obj.position[1];
+            const theta = Math.atan2(relY, relX);
+            object.rotation.z += theta;
         }
 
         if (obj.id === 399) {
