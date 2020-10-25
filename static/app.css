@@ -40,10 +40,12 @@ body {
     object-fit: cover;
     display: flex;
     flex-direction: column;
+    transition: opacity 250ms;
 }
 
 .control-box:hover {
     opacity: 0.75;
+    transition: opacity 250ms;
 }
 
 #right-controls {
@@ -143,6 +145,20 @@ button {
     margin-top: 5px;
 }
 
-#speed-slider {
-    background-color: grey;
-}
+/* #speed-slider {
+    background-color: red;
+    background: red; 
+    border-color: red;
+    color: red;
+} */
+
+/* input[type=range] {
+    -webkit-appearance: none;
+    margin: 2;
+    width: 10;
+    background-color: red;
+  
+    /* &:focus {
+      outline: none;
+    } */
+/* } */

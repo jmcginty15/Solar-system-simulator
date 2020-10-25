@@ -9,6 +9,7 @@ class Body {
         this.obj_type = obj.obj_type;
         this.sat_type = obj.sat_type;
         this.position = obj.position;
+        this.position_delta = [];
         this.velocity = obj.velocity;
         this.acceleration = [0, 0, 0];
         this.force = [0, 0, 0];

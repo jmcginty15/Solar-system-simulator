@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, redirect, flash, jsonify, send_file
 from flask_debugtoolbar import DebugToolbarExtension
 from models import db, connect_db, System, Object, AltName
-from functions import get_obj_batch, get_obj_vectors
+from functions import get_obj_batch, get_obj_vectors, get_id_list
 import datetime
 
 app = Flask(__name__)
@@ -26,23 +26,22 @@ def get_object(obj_id):
 
 @app.route('/bodies')
 def get_bodies():
-    date = datetime.datetime(2000, 4, 19, 22, 47) #Jan 19 22:47
-    ids = [10, 399, 301]
-    # for i in range(601, 654):
-    #     ids.append(i)
-    # ids.append(65035)
-    # ids.append(65040)
-    # ids.append(65041)
-    # ids.append(65045)
-    # ids.append(65048)
-    # ids.append(65050)
-    # ids.append(65055)
-    # ids.append(65056)
-    # for i in range(65065, 65082):
-    #     ids.append(i)
-    # ids.append(65083)
-    # ids.append(65084)
-    return jsonify(get_obj_batch(ids, 0, date))
+    print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+    object_set = request.args['object_set']
+    ids = get_id_list(object_set)
+
+    date = request.args['date']
+    year = int(date[:4])
+    month = int(date[5:7])
+    day = int(date[8:])
+
+    time = request.args['time']
+    hour = int(time[:2])
+    minute = int(time[3:5])
+    second = int(time[6:])
+
+    date_time = datetime.datetime(year, month, day, hour, minute, second)
+    return jsonify(get_obj_batch(ids, 0, date_time))
 
 @app.route('/objects/<int:sys_id>')
 def get_objects(sys_id):
@@ -59,9 +58,8 @@ def get_image(img_path):
 def test():
     return render_template('barnes-hut-test.html')
 
-@app.route('/barnes-hut-test/bodies')
+@app.route('/test')
 def test2():
     date = datetime.datetime(2000, 1, 1, 0, 0)
-    objs = Object.query.all()
-    ids = [obj.id for obj in objs]
+    ids = [10, 999, 901, 902, 903, 904, 905]
     return jsonify(get_obj_batch(ids, 0, date))

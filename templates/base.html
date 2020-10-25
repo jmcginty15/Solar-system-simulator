@@ -16,24 +16,24 @@
                 <h4 class="menu-title">Object set:</h4>
                 <select id="object-set" name="object-set" size="5" required>
                     <optgroup label="Solar system">
-                        <option>Full solar system</option>
-                        <option>Inner solar system</option>
-                        <option>Outer solar system</option>
-                        <option>Planets only</option>
+                        <option value="full">Full solar system</option>
+                        <option value="inner">Inner solar system</option>
+                        <option value="outer">Outer solar system</option>
+                        <option value="planets">Planets only</option>
                     </optgroup>
                     <optgroup label="Planetary systems">
-                        <option>Earth-Moon system</option>
-                        <option>Martian system</option>
-                        <option>Jovian system</option>
-                        <option>Saturnian system</option>
-                        <option>Uranian system</option>
-                        <option>Neptunian system</option>
-                        <option>Plutonian system</option>
+                        <option value="3">Earth-Moon system</option>
+                        <option value="4">Martian system</option>
+                        <option value="5">Jovian system</option>
+                        <option value="6">Saturnian system</option>
+                        <option value="7">Uranian system</option>
+                        <option value="8">Neptunian system</option>
+                        <option value="9">Plutonian system</option>
                     </optgroup>
                 </select>
                 <h4 class="menu-title">Start date/time:</h4>
-                <input class="input-field" id="date" type="date" name="date-time" required>
-                <input class="input-field" id="time" type="time" step="1" required> UTC
+                <p><input class="input-field" id="date" type="date" name="date-time" required></p>
+                <p><input class="input-field" id="time" type="time" step="1" required><span class="right-float">UTC</span></p>
                 <button type="submit" id="sim-select-submit">Go!</button>
             </form>
             <div id="sim-info">
@@ -46,9 +46,10 @@
             </div>
             <div id="object-info">
                 <h4>Object information</h4>
-                <!-- <button id="look">Look</button>
+                <button id="look">Look</button>
                 <input id="body-id" type="text">
-                <button id="start">Start</button> -->
+                <button id="start">Start</button>
+                <button id="pause">Pause</button>
             </div>
         </div>
         <div id="right-controls" class="control-box">

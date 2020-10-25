@@ -10,7 +10,11 @@ def get_obj_vectors(id, center, datetime):
     relative to the specified coordinate center.
     Then get object mass and name data from SQL database to combine into a single object."""
     julian = to_jd(datetime, fmt='jd')
-    nasa_obj = Horizons(id=id, location=f'500@{center}', epochs=julian, id_type='id')
+    if id in [1, 136108, 136199, 136472]:
+        id_type = 'smallbody'
+    else:
+        id_type = 'id'
+    nasa_obj = Horizons(id=id, location=f'500@{center}', epochs=julian, id_type=id_type)
     vec_table = nasa_obj.vectors()
     pos = [au_to_km(vec_table['x'][0]), au_to_km(vec_table['y'][0]), au_to_km(vec_table['z'][0])]
     vel = [au_to_km(vec_table['vx'][0], vel=True), au_to_km(vec_table['vy'][0], vel=True), au_to_km(vec_table['vz'][0], vel=True)]
@@ -58,6 +62,85 @@ def au_to_km(au, vel=False):
 def get_obj_batch(obj_ids, center, datetime):
     """Returns a list of position and velocity vectors for multiple objects"""
     return [get_obj_vectors(obj_id, center, datetime) for obj_id in obj_ids]
+
+def get_id_list(object_set):
+    mars_moons = [401, 402]
+    jupiter_moons = [i for i in range(501, 573)]
+    for i in range(55501, 55508):
+        jupiter_moons.append(i)
+    saturn_moons = [i for i in range(601, 654)]
+    for i in [65035, 65040, 65041, 65045, 65048, 65050, 65055, 65056]:
+        saturn_moons.append(i)
+    for i in range(65065, 65085):
+        saturn_moons.append(i)
+    uranus_moons = [i for i in range(701, 728)]
+    neptune_moons = [i for i in range(801, 815)]
+    pluto_moons = [i for i in range(901, 906)]
+
+    if object_set == 'full':
+        id_list = [10, 199, 299, 399, 301, 499]
+        for moon_id in mars_moons:
+            id_list.append(moon_id)
+        id_list.append(599)
+        for moon_id in jupiter_moons:
+            id_list.append(moon_id)
+        id_list.append(699)
+        for moon_id in saturn_moons:
+            id_list.append(moon_id)
+        id_list.append(799)
+        for moon_id in uranus_moons:
+            id_list.append(moon_id)
+        id_list.append(899)
+        for moon_id in neptune_moons:
+            id_list.append(moon_id)
+        id_list.append(999)
+        for moon_id in pluto_moons:
+            id_list.append(moon_id)
+    elif object_set == 'inner':
+        id_list = [10, 199, 299, 399, 301, 499, 401, 402]
+    elif object_set == 'outer':
+        id_list = [10, 599]
+        for moon_id in jupiter_moons:
+            id_list.append(moon_id)
+        id_list.append(699)
+        for moon_id in saturn_moons:
+            id_list.append(moon_id)
+        id_list.append(799)
+        for moon_id in uranus_moons:
+            id_list.append(moon_id)
+        id_list.append(899)
+        for moon_id in neptune_moons:
+            id_list.append(moon_id)
+        id_list.append(999)
+        for moon_id in pluto_moons:
+            id_list.append(moon_id)
+    elif object_set == 'planets':
+        id_list = [10, 199, 299, 399, 499, 599, 699, 799, 899]
+    elif object_set == '3':
+        id_list = [10, 399, 301]
+    elif object_set == '4':
+        id_list = [10, 499, 401, 402]
+    elif object_set == '5':
+        id_list = [10, 599]
+        for moon_id in jupiter_moons:
+            id_list.append(moon_id)
+    elif object_set == '6':
+        id_list = [10, 699]
+        for moon_id in saturn_moons:
+            id_list.append(moon_id)
+    elif object_set == '7':
+        id_list = [10, 799]
+        for moon_id in uranus_moons:
+            id_list.append(moon_id)
+    elif object_set == '8':
+        id_list = [10, 899]
+        for moon_id in neptune_moons:
+            id_list.append(moon_id)
+    elif object_set == '9':
+        id_list = [10, 999]
+        for moon_id in pluto_moons:
+            id_list.append(moon_id)
+    return id_list
 
 def test_barycenter_func():
     """Function to set up a test for barycenter method"""

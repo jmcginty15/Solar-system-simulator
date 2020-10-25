@@ -57,7 +57,7 @@ $(async function () {
     // plotOrbit(sys, sun);
     // const system = [sys];
 
-    var res = await axios.get('http://127.0.0.1:5000/bodies');
+    var res = await axios.get('http://127.0.0.1:5000/test');
     const sys = res.data;
     var sun = sys[0];
     var earth = sys[1];
@@ -73,9 +73,9 @@ $(async function () {
 
     // system.unshift(sun);
 
-    // for (let obj of system) {
-    //     addToScene(obj);
-    // }
+    for (let obj of system) {
+        addToScene(obj);
+    }
 
     let i = 0;
     let time = 0;
