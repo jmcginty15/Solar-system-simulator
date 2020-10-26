@@ -10,33 +10,24 @@ $(async function () {
 
     const viewport = document.getElementById('viewport');
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(40, (window.innerWidth) / (window.innerHeight), 0.0000000001, 2400000000000);
+    const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.0000000001, 2400000000000);
     camera.up = new THREE.Vector3(0, 0, 1);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    // viewport.style.height = window.innerHeight;
-    // viewport.style.width = window.innerWidth;
     renderer.sortObjects = false;
     viewport.appendChild(renderer.domElement);
-
-    // const flyControls = new FlyControls(camera, viewport);
-    // flyControls.dragToLook = true;
-    // flyControls.movementSpeed = 10000;
 
     const orbitControls = new OrbitControls(camera, viewport);
     orbitControls.enableZoom = true;
     orbitControls.enableKeys = true;
     orbitControls.keyPanSpeed = 100000;
 
-    // const trackballControls = new TrackballControls(camera, viewport);
-    // trackballControls.zoomSpeed = 1000000;
-
     var skySphere = new THREE.SphereGeometry(24000000000, 32, 32);
     var milkyWay = new THREE.TextureLoader().load('/images/background/ESO_-_Milky_Way.jpg');
     milkyWay.anisotropy = renderer.capabilities.getMaxAnisotropy();
     milkyWay.flipY = false;
-    var backgroundMaterial = new THREE.MeshBasicMaterial({ map: milkyWay });
-    var background = new Mesh(skySphere, backgroundMaterial);
+    const backgroundMaterial = new THREE.MeshBasicMaterial({ map: milkyWay });
+    const background = new Mesh(skySphere, backgroundMaterial);
     background.material.side = THREE.BackSide;
     background.rotation.x = - (90 - 60) * (Math.PI / 180);
     scene.add(background);
@@ -59,13 +50,13 @@ $(async function () {
 
     var res = await axios.get('http://127.0.0.1:5000/test');
     const sys = res.data;
-    var sun = sys[0];
-    var earth = sys[1];
-    plotOrbit(earth, sun);
+    // var sun = sys[0];
+    // var earth = sys[1];
+    // plotOrbit(earth, sun);
 
-    const system = [];
+    const simBodies = [];
     for (let body of sys) {
-        system.push(new Body(body));
+        simBodies.push(new Body(body));
     }
 
     // var starLight = new THREE.AmbientLight(0x404040, 0.5);
@@ -73,7 +64,7 @@ $(async function () {
 
     // system.unshift(sun);
 
-    for (let obj of system) {
+    for (let obj of simBodies) {
         addToScene(obj);
     }
 
@@ -82,8 +73,8 @@ $(async function () {
     let tstart = false;
     let cameraTarget = null;
 
-    const cameraZPos = system[1].position[2] + avgRadius(system[1]) * 3
-    camera.position.set(system[1].position[0], system[1].position[1], system[1].position[2] + 20000000);
+    const cameraZPos = simBodies[1].position[2] + avgRadius(simBodies[1]) * 3
+    camera.position.set(simBodies[1].position[0], simBodies[1].position[1], simBodies[1].position[2] + 20000000);
     // camera.position.set(0, 0, 500000000);
     // camera.position.set(0, 0, 0);    
     var render = function () {
@@ -94,15 +85,9 @@ $(async function () {
 
         if (go) {
             const tStep = 60;
-
-            // if (tstart) {
-            //     time = new Date();
-            //     tstart = false;
-            // }
-
             const sysTree = new Tree([-2e10, -2e10, -2e10], 4e10);
 
-            for (let body of system) {
+            for (let body of simBodies) {
                 sysTree.addBody(body);
             }
 
@@ -110,11 +95,12 @@ $(async function () {
                 lastPos = cameraTarget.position;
             }
 
-            for (let body of system) {
+            for (let body of simBodies) {
                 body.force = sysTree.getForceVector(body, 0);
                 body.updateAcceleration();
                 body.updateVelocity(tStep);
                 body.updatePosition(tStep);
+                body.updateModel(tStep);
             }
 
             if (cameraTarget) {
@@ -122,32 +108,8 @@ $(async function () {
                 delta = [newPos[0] - lastPos[0], newPos[1] - lastPos[1], newPos[2] - lastPos[2]];
             }
 
-            for (let i = 0; i < system.length; i++) {
-                const rotationSpeed = 2 * Math.PI / system[i].rotation_period;    // rad / s
-                sceneBodies[i].position.set(system[i].position[0], system[i].position[1], system[i].position[2]);
-                sceneBodies[i].rotation.z += tStep * rotationSpeed;
-            }
-
             const dist = Math.sqrt((newPos[0] - lastPos[0]) ** 2 + (newPos[1] - lastPos[1]) ** 2 + (newPos[2] - lastPos[2]) ** 2);
 
-            // object.rotation.x += 0.05;
-            // var newAcc = obj1.acceleration = accVector(system[0], system[1]);
-            // var newVel = obj1.updateVelocity(60);
-            // var newPos = obj1.updatePosition(60);
-
-            // console.log(newAcc);
-            // console.log(newVel);
-            // console.log(newPos);
-
-            // console.log(Math.atan2(newPos[1], newPos[0]) * (180 / Math.PI));
-
-            // obj2.rotation.z += 0.005;
-            // obj2.position.set(newPos[0], newPos[1], newPos[2]);
-            // camera.position.set(system[1].position[0], system[1].position[1], system[1].position[2] + 20000);
-            // console.log(obj2.position);
-            // const earthPos = [system[1].position[0] - system[0].position[0], system[1].position[1] - system[0].position[1]];
-            // const theta = Math.atan2(earthPos[1], earthPos[0]);
-            // console.log(theta * (180 / Math.PI));
             simTime += tStep;
             console.log(simTime / 60 / 60);
         } else {
@@ -169,6 +131,7 @@ $(async function () {
     };
 
     render();
+    console.log(scene.children);
 
     function avgRadius(obj) {
         return obj.dimensions.reduce((a, b) => a + b) / obj.dimensions.length;
@@ -212,7 +175,6 @@ $(async function () {
         var geometry = new THREE.SphereGeometry(rx, 32, 32);
         geometry.scale(1, yScale, zScale);
         geometry.rotateX(Math.PI / 2);
-        // geometry.scale(10, 10, 10);
 
         var material = new THREE.MeshPhongMaterial();
 
@@ -231,8 +193,10 @@ $(async function () {
             material.reflectivity = 1;
         }
 
-        var object = new THREE.Mesh(geometry, material);
+        const object = new THREE.Object3D();
+        const objectMesh = new THREE.Mesh(geometry, material);
         object.add(new THREE.AxesHelper(10000000));
+        object.add(objectMesh);
 
         if (obj.id === 10) {
             var sunLight = new THREE.PointLight(0xffffff, 1);
@@ -302,7 +266,8 @@ $(async function () {
             obj2 = object;
         }
 
-        sceneBodies.push(object);
+        // sceneBodies.push(object);
+        obj.model = object;
         scene.add(object);
     }
 
@@ -315,7 +280,7 @@ $(async function () {
     }
 
     function getBodyById(bodyId) {
-        for (let body of system) {
+        for (let body of simBodies) {
             if (body.id === bodyId) {
                 return body;
             }
@@ -364,4 +329,46 @@ $(async function () {
         const bodyId = parseInt($('#body-id').val());
         cameraTarget = lookAt(bodyId);
     });
+
+    $(window).on('resize', function () {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.updateProjectionMatrix();
+    });
+
+    // event listener for form submission
+    $('#sim-select').on('submit', function (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+
+        const date = $('#date').val();
+        const time = $('#time').val();
+        const bodySet = $('#object-set').val();
+
+        clearScene();
+        loadScene(date, time, bodySet);
+    });
+
+    // function to clear all objects from scene
+    function clearScene() {
+        const delObjects = [...scene.children]
+        for (let body of delObjects) {
+            if (body != background) {
+                // remove all objects from scene except background
+                scene.remove(body);
+                const bodyObjects = [...body.children];
+                for (let child of bodyObjects) {
+                    if (child.constructor.name === 'Mesh') {
+                        // dispose of materials, textures, and geometries
+                        child.geometry.dispose();
+                        try { child.material.map.dispose(); } catch {}
+                        try { child.material.bumpMap.dispose(); } catch {}
+                        try { child.material.alphaMap.dispose(); } catch {}
+                        try { child.material.specularMap.dispose(); } catch {}
+                        child.material.dispose();
+                    }
+                }
+            }
+        }
+    }
 });

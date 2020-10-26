@@ -3,6 +3,9 @@ class Body {
         this.designation = obj.designation;
         this.dimensions = obj.dimensions;
         this.rotation_period = obj.rotation_period;
+        this.x_rotation = Math.random() / 1000;
+        this.y_rotation = Math.random() / 1000;
+        this.z_rotation = Math.random() / 1000;
         this.id = obj.id;
         this.mass = obj.mass;
         this.name = obj.name;
@@ -27,6 +30,7 @@ class Body {
         this.ring_color = obj.ring_color;
         this.ring_transparency = obj.ring_transparency;
         this.bump_scale = obj.bump_scale
+        this.model = null;
     }
 
     updateAcceleration() {
@@ -58,16 +62,31 @@ class Body {
         const vel = this.velocity;
         const x = pos[0] + tStep * vel[0];
         const y = pos[1] + tStep * vel[1];
-        const z = pos[2] + tStep * vel[2];   
+        const z = pos[2] + tStep * vel[2];
         const newPos = [x, y, z];
         this.position = newPos;
-        return newPos;     
+        return newPos;
+    }
+
+    updateModel(tStep) {
+        // updates the model's position in the scene
+        this.model.position.set(this.position[0], this.position[1], this.position[2]);
+        if (this.rotation_period) {
+            // if the object has a rotation period in the database, rotate it on the z-axis
+            const rotationSpeed = 2 * Math.PI / this.rotation_period;
+            this.model.rotation.z += rotationSpeed * tStep;
+        } else {
+            // if the object does not have a rotation period in the database, just make it tumble a little bit
+            this.model.rotation.x += this.x_rotation;
+            this.model.rotation.y += this.y_rotation;
+            this.model.rotation.z += this.z_rotation;
+        }
     }
 
     orbitalParams(orbiting) {
         // calculates the object's orbital elements with reference to its primary body
         const G = 6.67408e-20;
-        const mu = G*(orbiting.mass + this.mass);
+        const mu = G * (orbiting.mass + this.mass);
 
         const r_vec = this.position;
         const v_vec = this.velocity;
@@ -86,27 +105,27 @@ class Body {
         const hy = h_vec[1];
         const hz = h_vec[2];
 
-        const r = (x**2 + y**2 + z**2)**(1 / 2);
-        const v = (vx**2 + vy**2 + vz**2)**(1 / 2);
-        const h = (hx**2 + hy**2 + hz**2)**(1 / 2);
+        const r = (x ** 2 + y ** 2 + z ** 2) ** (1 / 2);
+        const v = (vx ** 2 + vy ** 2 + vz ** 2) ** (1 / 2);
+        const h = (hx ** 2 + hy ** 2 + hz ** 2) ** (1 / 2);
 
-        const E = (v**2 / 2) - (mu / r);
+        const E = (v ** 2 / 2) - (mu / r);
 
-        const a = -(mu / (2*E));                                                      // semimajor axis
-        const e = (1 - (h**2 / (a*mu)))**(1 / 2);                                     // eccentricity
+        const a = -(mu / (2 * E));                                                      // semimajor axis
+        const e = (1 - (h ** 2 / (a * mu))) ** (1 / 2);                                     // eccentricity
         let i = Math.acos(hz / h);                                                    // inclination
         i = adjustAngleRange(i, 0, Math.PI);
 
         let Omega = Math.atan2(hx, -hy);                                              // longitude of ascending node
-        Omega = adjustAngleRange(Omega, 0, 2*Math.PI);
+        Omega = adjustAngleRange(Omega, 0, 2 * Math.PI);
 
-        const u = Math.atan2(z / Math.sin(i), x*Math.cos(Omega) + y*Math.cos(Omega));
-        const p = a * (1 - e**2);
+        const u = Math.atan2(z / Math.sin(i), x * Math.cos(Omega) + y * Math.cos(Omega));
+        const p = a * (1 - e ** 2);
 
-        let nu = Math.atan2((p / mu)**(1 / 2) * dotProduct(v_vec, r_vec), p - r);     // true anomaly
+        let nu = Math.atan2((p / mu) ** (1 / 2) * dotProduct(v_vec, r_vec), p - r);     // true anomaly
         let w = u - nu;                                                               // argument of periapse
-        nu = adjustAngleRange(nu, 0, 2*Math.PI);
-        w = adjustAngleRange(w, 0, 2*Math.PI);
+        nu = adjustAngleRange(nu, 0, 2 * Math.PI);
+        w = adjustAngleRange(w, 0, 2 * Math.PI);
 
         return {
             eccentricity: e,
@@ -120,11 +139,11 @@ class Body {
 }
 
 function crossProduct(v1, v2) {
-    return [v1[1]*v2[2] - v1[2]*v2[1], v1[2]*v2[0] - v1[0]*v2[2], v1[0]*v2[1] - v1[1]*v2[0]];
+    return [v1[1] * v2[2] - v1[2] * v2[1], v1[2] * v2[0] - v1[0] * v2[2], v1[0] * v2[1] - v1[1] * v2[0]];
 }
 
 function dotProduct(v1, v2) {
-    return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+    return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
 }
 
 function adjustAngleRange(angle, min, max) {
@@ -144,13 +163,13 @@ function distance(obj1, obj2) {
     const x = obj2.position[0] - obj1.position[0];
     const y = obj2.position[1] - obj1.position[1];
     const z = obj2.position[2] - obj1.position[2];
-    return Math.sqrt(x**2 + y**2 + z**2);
+    return Math.sqrt(x ** 2 + y ** 2 + z ** 2);
 }
 
 function forceMagnitude(obj1, obj2) {
     // returns the magnitude of the gravitational force between two objects
     // units: kN
-    return (G * obj1.mass * obj2.mass) / distance(obj1, obj2)**2;
+    return (G * obj1.mass * obj2.mass) / distance(obj1, obj2) ** 2;
 }
 
 function thetaDir(obj1, obj2) {
@@ -166,7 +185,7 @@ function phiDir(obj1, obj2) {
     // units: radians
     const x = obj2.position[0] - obj1.position[0];
     const y = obj2.position[1] - obj1.position[1];
-    const xy = Math.sqrt(x**2 + y**2);
+    const xy = Math.sqrt(x ** 2 + y ** 2);
     const z = obj2.position[2] - obj1.position[2];
     return Math.atan2(z, xy);
 }

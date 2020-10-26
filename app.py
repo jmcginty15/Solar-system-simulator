@@ -26,7 +26,6 @@ def get_object(obj_id):
 
 @app.route('/bodies')
 def get_bodies():
-    print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
     object_set = request.args['object_set']
     ids = get_id_list(object_set)
 
@@ -61,5 +60,6 @@ def test():
 @app.route('/test')
 def test2():
     date = datetime.datetime(2000, 1, 1, 0, 0)
+    # ids = [10, 299]
     ids = [10, 999, 901, 902, 903, 904, 905]
     return jsonify(get_obj_batch(ids, 0, date))
