@@ -5,8 +5,12 @@ import { TrackballControls } from './node_modules/three/examples/jsm/controls/Tr
 import { Mesh, Vector3 } from './node_modules/three/src/Three.js';
 
 $(async function () {
-    // const G = 6.67408e-20 // km3/(kg*s2)
-    let go = false;
+    const BASE_URL = 'http://127.0.0.1:5000';
+    let running = false;
+    let startDate = new Date();
+    let currentDate = new Date();
+    let elapsedTime = 0;
+    resetTimer(startDate);
 
     const viewport = document.getElementById('viewport');
     const scene = new THREE.Scene();
@@ -32,49 +36,21 @@ $(async function () {
     background.rotation.x = - (90 - 60) * (Math.PI / 180);
     scene.add(background);
 
+    let simBodies = [];
     let obj1 = 0;
     let obj2 = 0;
-    const sceneBodies = [];
     let simTime = 0;
 
     var axes = new THREE.AxesHelper(100000000000);
     scene.add(axes);
-
-    // var res = await axios.get(`http://127.0.0.1:5000/object/${10}`);
-    // var sun = res.data;
-
-    // res = await axios.get(`http://127.0.0.1:5000/object/${399}`);
-    // var sys = res.data;
-    // plotOrbit(sys, sun);
-    // const system = [sys];
-
-    var res = await axios.get('http://127.0.0.1:5000/test');
-    const sys = res.data;
-    // var sun = sys[0];
-    // var earth = sys[1];
-    // plotOrbit(earth, sun);
-
-    const simBodies = [];
-    for (let body of sys) {
-        simBodies.push(new Body(body));
-    }
-
-    // var starLight = new THREE.AmbientLight(0x404040, 0.5);
-    // scene.add(starLight);
-
-    // system.unshift(sun);
-
-    for (let obj of simBodies) {
-        addToScene(obj);
-    }
 
     let i = 0;
     let time = 0;
     let tstart = false;
     let cameraTarget = null;
 
-    const cameraZPos = simBodies[1].position[2] + avgRadius(simBodies[1]) * 3
-    camera.position.set(simBodies[1].position[0], simBodies[1].position[1], simBodies[1].position[2] + 20000000);
+    // const cameraZPos = simBodies[1].position[2] + avgRadius(simBodies[1]) * 3
+    // camera.position.set(simBodies[1].position[0], simBodies[1].position[1], simBodies[1].position[2] + 20000000);
     // camera.position.set(0, 0, 500000000);
     // camera.position.set(0, 0, 0);    
     var render = function () {
@@ -82,8 +58,9 @@ $(async function () {
         let lastPos = [];
         let newPos = [];
         let delta = [];
+        let timeString = '';
 
-        if (go) {
+        if (running) {
             const tStep = 60;
             const sysTree = new Tree([-2e10, -2e10, -2e10], 4e10);
 
@@ -110,13 +87,15 @@ $(async function () {
 
             const dist = Math.sqrt((newPos[0] - lastPos[0]) ** 2 + (newPos[1] - lastPos[1]) ** 2 + (newPos[2] - lastPos[2]) ** 2);
 
-            simTime += tStep;
-            console.log(simTime / 60 / 60);
+            currentDate = new Date(currentDate.getTime() + tStep * 1000);
         } else {
             delta = [0, 0, 0];
         }
 
-        // flyControls.update(1);
+        elapsedTime = currentDate - startDate;
+        timeString = parseTime(elapsedTime);
+        $('#elapsed-time').text(timeString);
+        $('#current-time').text(parseDateTime(currentDate));
         orbitControls.update();
 
         if (cameraTarget) {
@@ -126,12 +105,11 @@ $(async function () {
             orbitControls.target = new THREE.Vector3(cameraTarget.position[0], cameraTarget.position[1], cameraTarget.position[2]);
         }
 
-        // trackballControls.update();
         renderer.render(scene, camera);
     };
 
     render();
-    console.log(scene.children);
+    await loadScene(startDate, '9');
 
     function avgRadius(obj) {
         return obj.dimensions.reduce((a, b) => a + b) / obj.dimensions.length;
@@ -195,7 +173,7 @@ $(async function () {
 
         const object = new THREE.Object3D();
         const objectMesh = new THREE.Mesh(geometry, material);
-        object.add(new THREE.AxesHelper(10000000));
+        // object.add(new THREE.AxesHelper(10000000));
         object.add(objectMesh);
 
         if (obj.id === 10) {
@@ -320,9 +298,15 @@ $(async function () {
         sceneObject.add(cloudSphere);
     }
 
-    $('#start').on('click', function () {
-        go = true;
-        tstart = true;
+    $('#play-pause').on('click', function () {
+        if (running) {
+            running = false;
+            $('#play-pause').html('&#9205');
+        } else {
+            $('#play-pause').html('&#9208');
+            running = true;
+            tstart = true;
+        }
     });
 
     $('#look').on('click', function () {
@@ -337,16 +321,25 @@ $(async function () {
     });
 
     // event listener for form submission
-    $('#sim-select').on('submit', function (evt) {
+    $('#sim-select').on('submit', async function (evt) {
         evt.preventDefault();
         evt.stopPropagation();
+        running = false;
+        $('#play-pause').html('&#9205');
 
         const date = $('#date').val();
         const time = $('#time').val();
         const bodySet = $('#object-set').val();
 
+        startDate = new Date(`${date}T${time}`);
+        currentDate = new Date(`${date}T${time}`);
+
+        console.log(startDate, currentDate);
+        console.log(startDate.getUTCHours(), currentDate.getUTCHours());
+
         clearScene();
-        loadScene(date, time, bodySet);
+        resetTimer(startDate);
+        await loadScene(startDate, bodySet);
     });
 
     // function to clear all objects from scene
@@ -361,14 +354,113 @@ $(async function () {
                     if (child.constructor.name === 'Mesh') {
                         // dispose of materials, textures, and geometries
                         child.geometry.dispose();
-                        try { child.material.map.dispose(); } catch {}
-                        try { child.material.bumpMap.dispose(); } catch {}
-                        try { child.material.alphaMap.dispose(); } catch {}
-                        try { child.material.specularMap.dispose(); } catch {}
+                        try { child.material.map.dispose(); } catch { }
+                        try { child.material.bumpMap.dispose(); } catch { }
+                        try { child.material.alphaMap.dispose(); } catch { }
+                        try { child.material.specularMap.dispose(); } catch { }
                         child.material.dispose();
                     }
                 }
             }
         }
+        simBodies = [];
+    }
+
+    // function to load new scene
+    async function loadScene(datetime, bodySet) {
+        const year = datetime.getUTCFullYear();
+        const month = datetime.getUTCMonth() + 1;
+        const day = datetime.getUTCDate();
+        const hour = datetime.getUTCHours();
+        const minute = datetime.getUTCMinutes();
+        const second = datetime.getUTCSeconds();
+
+        const res = await axios.get(`${BASE_URL}/bodies`, {
+            params: {
+                'year': year,
+                'month': month,
+                'day': day,
+                'hour': hour,
+                'minute': minute,
+                'second': second,
+                'object_set': bodySet
+            }
+        });
+
+        for (let body of res.data) {
+            const nextBody = new Body(body);
+            simBodies.push(nextBody);
+            addToScene(nextBody);
+        }
+    }
+
+    // function to reset time display
+    function resetTimer(datetime) {
+        const dateString = parseDateTime(datetime);
+        elapsedTime = 0;
+
+        $('#start-time').text(dateString);
+        $('#current-time').text(dateString);
+        $('#elapsed-time').text('00:00');
+    }
+
+    // function to convert elapsed time to displayable string
+    function parseTime(time) {
+        let outputString = '';
+        let seconds = time / 1000;
+        const years = Math.floor(seconds / 31557600);
+        if (years > 0) {
+            outputString += `${years}y `;
+            seconds = seconds % 31557600;
+        }
+        const days = Math.floor(seconds / 86400);
+        if (days > 0 || years > 0) {
+            outputString += `${days}d `;
+            seconds = seconds % 86400;
+        }
+        const hours = Math.floor(seconds / 3600);
+        if (hours.toString().length < 2) {
+            outputString += `0${hours}:`;
+        } else {
+            outputString += `${hours}:`;
+        }
+        seconds = seconds % 3600;
+        const minutes = Math.floor(seconds / 60);
+        if (minutes.toString().length < 2) {
+            outputString += `0${minutes}:`;
+        } else {
+            outputString += `${minutes}:`;
+        }
+        seconds = seconds % 60;
+        if (seconds.toString().length < 2) {
+            outputString += `0${seconds}`;
+        } else {
+            outputString += `${seconds}`;
+        }
+        return outputString;
+    }
+
+    // function to convert datetime object to displayable string
+    function parseDateTime(datetime) {
+        let month = datetime.getUTCMonth() + 1;
+        let day = datetime.getUTCDate();
+        const year = datetime.getUTCFullYear();
+        let hour = datetime.getUTCHours();
+        let minute = datetime.getUTCMinutes();
+
+        if (day.toString().length < 2) {
+            day = '0' + day.toString();
+        }
+        if (month.toString().length < 2) {
+            month = '0' + month.toString();
+        }
+        if (hour.toString().length < 2) {
+            hour = '0' + hour.toString();
+        }
+        if (minute.toString().length < 2) {
+            minute = '0' + minute.toString();
+        }
+
+        return `${month}/${day}/${year} ${hour}:${minute}`;
     }
 });

@@ -29,15 +29,12 @@ def get_bodies():
     object_set = request.args['object_set']
     ids = get_id_list(object_set)
 
-    date = request.args['date']
-    year = int(date[:4])
-    month = int(date[5:7])
-    day = int(date[8:])
-
-    time = request.args['time']
-    hour = int(time[:2])
-    minute = int(time[3:5])
-    second = int(time[6:])
+    year = int(request.args['year'])
+    month = int(request.args['month'])
+    day = int(request.args['day'])
+    hour = int(request.args['hour'])
+    minute = int(request.args['minute'])
+    second = int(request.args['second'])
 
     date_time = datetime.datetime(year, month, day, hour, minute, second)
     return jsonify(get_obj_batch(ids, 0, date_time))

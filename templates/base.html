@@ -33,13 +33,14 @@
                 </select>
                 <h4 class="menu-title">Start date/time:</h4>
                 <p><input class="input-field" id="date" type="date" name="date-time" required></p>
-                <p><input class="input-field" id="time" type="time" step="1" required><span class="right-float">UTC</span></p>
+                <p><input class="input-field" id="time" type="time" step="1" required><span class="right-float">Local</span></p>
                 <button type="submit" id="sim-select-submit">Go!</button>
             </form>
             <div id="sim-info">
-                <p><b>Start date</b><em class="right-float">10/20/20 00:00</em></p>
-                <p><b>Current date</b><em class="right-float">10/20/20 00:00</em></p>
-                <p><b>Elapsed time</b><em class="right-float">0d 00:00</em></p>
+                <p><small class="right-float"><em>Times display in UTC</em></small></p>
+                <p><b>Start date</b><em id="start-time" class="right-float"></em></p>
+                <p><b>Current date</b><em id="current-time" class="right-float"></em></p>
+                <p><b>Elapsed time</b><em id="elapsed-time" class="right-float"></em></p>
                 <p id="controls">Speed: <input id="speed-slider" type="range" min="1" max="10" value="1">
                     <span id="play-pause-container" class="right-float"><button id="play-pause">&#9205</button></span>
                 </p>

@@ -217,3 +217,8 @@ function reverseVector(vec) {
     // returns the input vector pointing in the opposite direction
     return [-vec[0], -vec[1], -vec[2]];
 }
+
+function buttDate(date, time) {
+    const datetime = new Date(`${date}T${time}`);
+    return datetime;
+}
