@@ -7,13 +7,11 @@ class Body {
         this.y_rotation = Math.random() / 1000;
         this.z_rotation = Math.random() / 1000;
         this.id = obj.id;
+        this.available = obj.available;
         this.mass = obj.mass;
         this.name = obj.name;
         this.obj_type = obj.obj_type;
         this.sat_type = obj.sat_type;
-        this.position = obj.position;
-        this.position_delta = [];
-        this.velocity = obj.velocity;
         this.acceleration = [0, 0, 0];
         this.force = [0, 0, 0];
         this.solstice_angle = obj.solstice_angle;
@@ -31,6 +29,11 @@ class Body {
         this.ring_transparency = obj.ring_transparency;
         this.bump_scale = obj.bump_scale
         this.model = null;
+
+        if (this.available) {
+            this.position = obj.position;
+            this.velocity = obj.velocity;                
+        }
     }
 
     updateAcceleration() {

@@ -10,6 +10,7 @@ $(async function () {
     let startDate = new Date();
     let currentDate = new Date();
     let elapsedTime = 0;
+    let simSpeed = 1;
     resetTimer(startDate);
 
     const viewport = document.getElementById('viewport');
@@ -26,7 +27,7 @@ $(async function () {
     orbitControls.enableKeys = true;
     orbitControls.keyPanSpeed = 100000;
 
-    var skySphere = new THREE.SphereGeometry(24000000000, 32, 32);
+    var skySphere = new THREE.SphereGeometry(240000000000, 32, 32);
     var milkyWay = new THREE.TextureLoader().load('/images/background/ESO_-_Milky_Way.jpg');
     milkyWay.anisotropy = renderer.capabilities.getMaxAnisotropy();
     milkyWay.flipY = false;
@@ -60,34 +61,47 @@ $(async function () {
         let delta = [];
         let timeString = '';
 
+        if (cameraTarget) {
+            lastPos = cameraTarget.position;
+        }
+
         if (running) {
-            const tStep = 60;
-            const sysTree = new Tree([-2e10, -2e10, -2e10], 4e10);
+            let loops = 1;
+            let tStep = 60;
+            let threshold = 0;
 
-            for (let body of simBodies) {
-                sysTree.addBody(body);
+            if (simSpeed >= 1) {
+                loops = simSpeed;
+                threshold = (simSpeed + simBodies.length) / 323;
+            } else {
+                tStep = -1 / (simSpeed - 1);
             }
 
-            if (cameraTarget) {
-                lastPos = cameraTarget.position;
+            console.log(simBodies.length, simSpeed, threshold);
+
+            for (let i = 0; i < loops; i++) {
+                const sysTree = new Tree([-2e10, -2e10, -2e10], 4e10);
+
+                for (let body of simBodies) {
+                    if (body.available) {
+                        sysTree.addBody(body);
+                    }
+                }
+
+                for (let body of simBodies) {
+                    if (body.available) {
+                        body.force = sysTree.getForceVector(body, threshold);
+                        body.updateAcceleration();
+                        body.updateVelocity(tStep);
+                        body.updatePosition(tStep);
+                        body.updateModel(tStep);
+                    }
+                }
+
+                const dist = Math.sqrt((newPos[0] - lastPos[0]) ** 2 + (newPos[1] - lastPos[1]) ** 2 + (newPos[2] - lastPos[2]) ** 2);
+
+                currentDate = new Date(currentDate.getTime() + tStep * 1000);
             }
-
-            for (let body of simBodies) {
-                body.force = sysTree.getForceVector(body, 0);
-                body.updateAcceleration();
-                body.updateVelocity(tStep);
-                body.updatePosition(tStep);
-                body.updateModel(tStep);
-            }
-
-            if (cameraTarget) {
-                newPos = cameraTarget.position;
-                delta = [newPos[0] - lastPos[0], newPos[1] - lastPos[1], newPos[2] - lastPos[2]];
-            }
-
-            const dist = Math.sqrt((newPos[0] - lastPos[0]) ** 2 + (newPos[1] - lastPos[1]) ** 2 + (newPos[2] - lastPos[2]) ** 2);
-
-            currentDate = new Date(currentDate.getTime() + tStep * 1000);
         } else {
             delta = [0, 0, 0];
         }
@@ -99,6 +113,8 @@ $(async function () {
         orbitControls.update();
 
         if (cameraTarget) {
+            newPos = cameraTarget.position;
+            delta = [newPos[0] - lastPos[0], newPos[1] - lastPos[1], newPos[2] - lastPos[2]];
             camera.position.x += delta[0];
             camera.position.y += delta[1];
             camera.position.z += delta[2];
@@ -150,7 +166,7 @@ $(async function () {
         var py = obj.position[1];
         var pz = obj.position[2];
 
-        var geometry = new THREE.SphereGeometry(rx, 32, 32);
+        var geometry = new THREE.SphereGeometry(rx, 24, 24);
         geometry.scale(1, yScale, zScale);
         geometry.rotateX(Math.PI / 2);
 
@@ -287,7 +303,7 @@ $(async function () {
     }
 
     function addClouds(body, sceneObject, rx, yScale, zScale) {
-        const cloudGeometry = new THREE.SphereGeometry(rx + 10, 32, 32);
+        const cloudGeometry = new THREE.SphereGeometry(rx + 10, 24, 24);
         cloudGeometry.scale(1, yScale, zScale);
         const cloudMaterial = new THREE.MeshPhongMaterial();
         cloudMaterial.map = new THREE.TextureLoader().load(body.cloud_map);
@@ -314,6 +330,7 @@ $(async function () {
         cameraTarget = lookAt(bodyId);
     });
 
+    // event listener for window resize
     $(window).on('resize', function () {
         camera.aspect = window.innerWidth / window.innerHeight;
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -334,12 +351,14 @@ $(async function () {
         startDate = new Date(`${date}T${time}`);
         currentDate = new Date(`${date}T${time}`);
 
-        console.log(startDate, currentDate);
-        console.log(startDate.getUTCHours(), currentDate.getUTCHours());
-
         clearScene();
         resetTimer(startDate);
         await loadScene(startDate, bodySet);
+    });
+
+    // event listener for range slider change
+    $('#speed-slider').on('change', function () {
+        simSpeed = parseInt($('#speed-slider').val());
     });
 
     // function to clear all objects from scene
@@ -390,77 +409,9 @@ $(async function () {
         for (let body of res.data) {
             const nextBody = new Body(body);
             simBodies.push(nextBody);
-            addToScene(nextBody);
+            if (body.available) {
+                addToScene(nextBody);
+            }
         }
-    }
-
-    // function to reset time display
-    function resetTimer(datetime) {
-        const dateString = parseDateTime(datetime);
-        elapsedTime = 0;
-
-        $('#start-time').text(dateString);
-        $('#current-time').text(dateString);
-        $('#elapsed-time').text('00:00');
-    }
-
-    // function to convert elapsed time to displayable string
-    function parseTime(time) {
-        let outputString = '';
-        let seconds = time / 1000;
-        const years = Math.floor(seconds / 31557600);
-        if (years > 0) {
-            outputString += `${years}y `;
-            seconds = seconds % 31557600;
-        }
-        const days = Math.floor(seconds / 86400);
-        if (days > 0 || years > 0) {
-            outputString += `${days}d `;
-            seconds = seconds % 86400;
-        }
-        const hours = Math.floor(seconds / 3600);
-        if (hours.toString().length < 2) {
-            outputString += `0${hours}:`;
-        } else {
-            outputString += `${hours}:`;
-        }
-        seconds = seconds % 3600;
-        const minutes = Math.floor(seconds / 60);
-        if (minutes.toString().length < 2) {
-            outputString += `0${minutes}:`;
-        } else {
-            outputString += `${minutes}:`;
-        }
-        seconds = seconds % 60;
-        if (seconds.toString().length < 2) {
-            outputString += `0${seconds}`;
-        } else {
-            outputString += `${seconds}`;
-        }
-        return outputString;
-    }
-
-    // function to convert datetime object to displayable string
-    function parseDateTime(datetime) {
-        let month = datetime.getUTCMonth() + 1;
-        let day = datetime.getUTCDate();
-        const year = datetime.getUTCFullYear();
-        let hour = datetime.getUTCHours();
-        let minute = datetime.getUTCMinutes();
-
-        if (day.toString().length < 2) {
-            day = '0' + day.toString();
-        }
-        if (month.toString().length < 2) {
-            month = '0' + month.toString();
-        }
-        if (hour.toString().length < 2) {
-            hour = '0' + hour.toString();
-        }
-        if (minute.toString().length < 2) {
-            minute = '0' + minute.toString();
-        }
-
-        return `${month}/${day}/${year} ${hour}:${minute}`;
     }
 });

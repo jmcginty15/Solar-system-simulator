@@ -5,6 +5,7 @@ import datetime
 import numpy
 import math
 
+
 def get_obj_vectors(id, center, datetime):
     """Get position and velocity vectors for a given object at a specified date and time,
     relative to the specified coordinate center.
@@ -14,20 +15,25 @@ def get_obj_vectors(id, center, datetime):
         id_type = 'smallbody'
     else:
         id_type = 'id'
-    nasa_obj = Horizons(id=id, location=f'500@{center}', epochs=julian, id_type=id_type)
-    vec_table = nasa_obj.vectors()
-    pos = [au_to_km(vec_table['x'][0]), au_to_km(vec_table['y'][0]), au_to_km(vec_table['z'][0])]
-    vel = [au_to_km(vec_table['vx'][0], vel=True), au_to_km(vec_table['vy'][0], vel=True), au_to_km(vec_table['vz'][0], vel=True)]
+
+    try:
+        nasa_obj = Horizons(id=id, location=f'500@{center}', epochs=julian, id_type=id_type)
+        vec_table = nasa_obj.vectors()
+        pos = [au_to_km(vec_table['x'][0]), au_to_km(vec_table['y'][0]), au_to_km(vec_table['z'][0])]
+        vel = [au_to_km(vec_table['vx'][0], vel=True), au_to_km(vec_table['vy'][0], vel=True), au_to_km(vec_table['vz'][0], vel=True)]
+    except:
+        nasa_obj = None
 
     database_obj = Object.query.get_or_404(id)
     size = [database_obj.radius_x, database_obj.radius_y, database_obj.radius_z]
 
     final_obj = {'id': id,
+                 'available': False,
                  'name': database_obj.name,
                  'designation': database_obj.designation,
                  'obj_type': database_obj.obj_type,
                  'sat_type': database_obj.sat_type,
-                #  'alt_names': database_obj.alt_names,
+                 #  'alt_names': database_obj.alt_names,
                  'mass': database_obj.mass,
                  'dimensions': size,
                  'rotation_period': database_obj.rotation_period,
@@ -44,11 +50,15 @@ def get_obj_vectors(id, center, datetime):
                  'cloud_transparency': database_obj.cloud_transparency,
                  'ring_color': database_obj.ring_color,
                  'ring_transparency': database_obj.ring_transparency,
-                 'bump_scale': database_obj.bump_scale,
-                 'position': pos,
-                 'velocity': vel}
+                 'bump_scale': database_obj.bump_scale}
+
+    if nasa_obj:
+        final_obj['position'] = pos
+        final_obj['velocity'] = vel
+        final_obj['available'] = True
 
     return final_obj
+
 
 def au_to_km(au, vel=False):
     """Convert from astronomical units (au) to kilometers (km)
@@ -59,9 +69,11 @@ def au_to_km(au, vel=False):
         km = au * 149597870.7
     return km
 
+
 def get_obj_batch(obj_ids, center, datetime):
     """Returns a list of position and velocity vectors for multiple objects"""
     return [get_obj_vectors(obj_id, center, datetime) for obj_id in obj_ids]
+
 
 def get_id_list(object_set):
     mars_moons = [401, 402]
@@ -78,7 +90,7 @@ def get_id_list(object_set):
     pluto_moons = [i for i in range(901, 906)]
 
     if object_set == 'full':
-        id_list = [10, 199, 299, 399, 301, 499]
+        id_list = [10, 199, 299, 399, 301, 499, 1]
         for moon_id in mars_moons:
             id_list.append(moon_id)
         id_list.append(599)
@@ -96,8 +108,11 @@ def get_id_list(object_set):
         id_list.append(999)
         for moon_id in pluto_moons:
             id_list.append(moon_id)
+        id_list.append(136108)
+        id_list.append(136199)
+        id_list.append(136472)
     elif object_set == 'inner':
-        id_list = [10, 199, 299, 399, 301, 499, 401, 402]
+        id_list = [10, 199, 299, 399, 301, 499, 401, 402, 1]
     elif object_set == 'outer':
         id_list = [10, 599]
         for moon_id in jupiter_moons:
@@ -114,8 +129,15 @@ def get_id_list(object_set):
         id_list.append(999)
         for moon_id in pluto_moons:
             id_list.append(moon_id)
+        id_list.append(136108)
+        id_list.append(136199)
+        id_list.append(136472)
     elif object_set == 'planets':
         id_list = [10, 199, 299, 399, 499, 599, 699, 799, 899]
+    elif object_set == 'dwarves':
+        id_list = [10, 1, 999, 136108, 136199, 136472]
+    elif object_set == 'planets-dwarves':
+        id_list = [10, 199, 299, 399, 499, 1, 599, 699, 799, 899, 999, 136108, 136199, 136472]
     elif object_set == '3':
         id_list = [10, 399, 301]
     elif object_set == '4':
@@ -142,12 +164,14 @@ def get_id_list(object_set):
             id_list.append(moon_id)
     return id_list
 
+
 def test_barycenter_func():
     """Function to set up a test for barycenter method"""
     date = datetime.datetime(2017, 10, 1, 21, 18)
     pluto_sys = System.query.get(9)
     ids = [obj.id for obj in pluto_sys.objects]
     return get_obj_batch(ids, 0, date)
+
 
 def cross_product(v1, v2):
     x1 = v1[0]
@@ -157,12 +181,13 @@ def cross_product(v1, v2):
     x2 = v2[0]
     y2 = v2[1]
     z2 = v2[2]
-    
+
     x3 = y1*z2 - z1*y2
     y3 = z1*x2 - x1*z2
     z3 = x1*y2 - y1*x2
 
     return [x3, y3, z3]
+
 
 def dot_product(v1, v2):
     x1 = v1[0]
@@ -175,6 +200,7 @@ def dot_product(v1, v2):
 
     return x1 * x2 + y1 * y2 + z1 * z2
 
+
 def vectors_to_ellipse(r_vec, v_vec, m1, m2):
     G = 6.67408e-20
     mu = G*(m1 + m2)
@@ -186,34 +212,40 @@ def vectors_to_ellipse(r_vec, v_vec, m1, m2):
     vx = v_vec[0]
     vy = v_vec[1]
     vz = v_vec[2]
-    
+
     h_vec = cross_product(r_vec, v_vec)
-    
+
     hx = h_vec[0]
     hy = h_vec[1]
     hz = h_vec[2]
 
     r = (x**2 + y**2 + z**2)**(1 / 2)
     v = (vx**2 + vy**2 + vz**2)**(1 / 2)
-    h = (hx**2 + hy**2 + hz**2)**(1 / 2)    
+    h = (hx**2 + hy**2 + hz**2)**(1 / 2)
 
     E = (v**2 / 2) - (mu / r)
-    
-    a = -(mu / (2 * E))                                                         # semimajor axis
-    e = (1 - (h**2/(a*mu)))**(1 / 2)                                            # eccentricity
-    i = numpy.arccos(hz / h)                                                    # inclination
+
+    # semimajor axis
+    a = -(mu / (2 * E))
+    # eccentricity
+    e = (1 - (h**2/(a*mu)))**(1 / 2)
+    # inclination
+    i = numpy.arccos(hz / h)
 
     while i > math.pi:
         i -= 2 * math.pi
     while i < 0:
         i += 2 * math.pi
-    
-    Omega = math.atan2(hx, -hy)                                                 # longitude of ascending node
+
+    # longitude of ascending node
+    Omega = math.atan2(hx, -hy)
 
     u = math.atan2(z / math.sin(i), x * math.cos(Omega) + y * math.sin(Omega))
 
     p = a * (1 - e**2)
-    nu = math.atan2((p / mu)**(1 / 2) * dot_product(v_vec, r_vec), p - r)       # true anomaly
-    omega = u - nu                                                              # argument of periapsis
+    nu = math.atan2((p / mu)**(1 / 2) * dot_product(v_vec,
+                                                    r_vec), p - r)       # true anomaly
+    # argument of periapsis
+    omega = u - nu
 
     return [e, a, math.degrees(i), math.degrees(Omega), math.degrees(omega), math.degrees(nu)]

@@ -20,6 +20,8 @@
                         <option value="inner">Inner solar system</option>
                         <option value="outer">Outer solar system</option>
                         <option value="planets">Planets only</option>
+                        <option value="dwarves">Dwarf planets only</option>
+                        <option value="planets-dwarves">Planets and dwarf planets</option>
                     </optgroup>
                     <optgroup label="Planetary systems">
                         <option value="3">Earth-Moon system</option>
@@ -41,7 +43,7 @@
                 <p><b>Start date</b><em id="start-time" class="right-float"></em></p>
                 <p><b>Current date</b><em id="current-time" class="right-float"></em></p>
                 <p><b>Elapsed time</b><em id="elapsed-time" class="right-float"></em></p>
-                <p id="controls">Speed: <input id="speed-slider" type="range" min="1" max="10" value="1">
+                <p id="controls">Speed: <input id="speed-slider" type="range" min="-59" max="100" value="1">
                     <span id="play-pause-container" class="right-float"><button id="play-pause">&#9205</button></span>
                 </p>
             </div>
@@ -80,6 +82,7 @@
         integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/axios/dist/axios.js"></script>
     <script src="/static/classes.js"></script>
+    <script src="/static/functions.js"></script>
     <script src="/static/barnes-hut.js"></script>
     <script src="/static/app.js" type="module"></script>
 </body>
