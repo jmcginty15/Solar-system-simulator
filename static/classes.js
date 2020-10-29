@@ -32,7 +32,7 @@ class Body {
 
         if (this.available) {
             this.position = obj.position;
-            this.velocity = obj.velocity;                
+            this.velocity = obj.velocity;
         }
     }
 
@@ -138,6 +138,60 @@ class Body {
             argPeriapse: w,
             trueAnomaly: nu
         }
+    }
+}
+
+class System {
+    constructor(id, bodyList) {
+        this.id = id;
+        this.bodies = bodyList;
+        this.primary = this.bodies[0];
+        this.position = [0, 0, 0];
+
+        if (id === 0) {
+            this.name = 'Solar';
+            this.radius = 1.457936e+10;
+        } else if (id === 3) {
+            this.name = 'Earth-Moon';
+            this.radius = 405400;
+        } else if (id === 4) {
+            this.name = 'Martian';
+            this.radius = 23470.9;
+        } else if (id === 5) {
+            this.name = 'Jovian';
+            this.radius = 39427165.8;
+        } else if (id === 6) {
+            this.name = 'Saturnian';
+            this.radius = 30694994.4;
+        } else if (id === 7) {
+            this.name = 'Uranian';
+            this.radius = 28596748.2;
+        } else if (id === 8) {
+            this.name = 'Neptunian';
+            this.radius = 77784500;
+        } else if (id === 9) {
+            this.name = 'Plutonian';
+            this.radius = 65117.494156;
+        }
+    }
+
+    updatePosition() {
+        // updates the system barycenter according to the bodies it contains
+        let totalMass = 0;
+        const posMass = [0, 0, 0];
+        for (let body of this.bodies) {
+            if (body.available) {
+                totalMass += body.mass;
+                posMass[0] += body.position[0] * body.mass;
+                posMass[1] += body.position[1] * body.mass;
+                posMass[2] += body.position[2] * body.mass;
+            }
+        }
+        posMass[0] /= totalMass;
+        posMass[1] /= totalMass;
+        posMass[2] /= totalMass;
+        this.position = posMass;
+        return posMass;
     }
 }
 

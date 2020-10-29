@@ -71,7 +71,7 @@ function parseDateTime(datetime) {
 // function to update selection list
 function loadSelectList(bodySet, bodyList) {
     $('#object-select').empty();
-    $('#object-select').append('<ul id="object-list"><li id="0" class="object-selector">Coordinate center</li></ul>');
+    $('#object-select').append('<ul id="object-list"><li id="0" class="object-selector">Solar system barycenter</li></ul>');
 
     const simpleOptions = ['planets', 'dwarves', 'planets-dwarves'];
     const systemOptions = ['full', 'inner', 'outer', '3', '4', '5', '6', '7', '8', '9'];
@@ -147,6 +147,41 @@ function loadSelectList(bodySet, bodyList) {
     }
 }
 
+// function to display information about selected system
+function updateSystemInfo(system) {
+    $infoBox = $('#object-info');
+    $infoBox.empty();
+
+    $infoBox.append(`<h3>${system.name + ' system'}</h3>`);
+    $infoBox.append(`<p class="info-box-small"><b>Primary body:</b> <em class="right-float">${system.primary.name}</em></p>`);
+
+    if (system.id === 0) {
+        $infoBox.append(`<p class="info-box-small"><b>Known planets:</b> <em class="right-float">8</em></p>`);
+        $infoBox.append(`<p class="info-box-small"><b>Known dwarf planets:</b> <em class="right-float">5</em></p>`);
+    } else {
+        $infoBox.append(`<p class="info-box-small"><b>Known moons:</b> <em class="right-float">${system.bodies.length - 1}</em></p>`);
+    }
+
+    let radius = system.radius;
+    let radiusLabel = '';
+    if (radius < 1e+6) {
+        radius = radius;
+        radiusLabel = radiusLabel;
+    } else if (radius < 1e+9) {
+        radius /= 1e+6;
+        radiusLabel = ' million';
+    } else if (radius < 1e+12) {
+        radius /= 1e+9;
+        radiusLabel = ' billion';
+    } else {
+        radius /= 1e+12;
+        radiusLabel = ' trillion';
+    }
+    radius = +radius.toFixed(2);
+
+    $infoBox.append(`<p class="info-box-small"><b>Approx radius:</b> <em class="right-float">${radius + radiusLabel} km</em></p>`);
+}
+
 // function to display information about selected object
 function updateObjectInfo(body) {
     $infoBox = $('#object-info');
@@ -163,8 +198,8 @@ function updateObjectInfo(body) {
     }
 
     if (body.obj_type) {
-        const $type = $(`<p class="info-box-small">${body.obj_type}</p>`);
-        
+        const $type = $(`<p id="info-subtitle" class="info-box-small">${body.obj_type}</p>`);
+
         if (body.sat_type) {
             $type.append(`<small class="right-float"><em>${body.sat_type}</em></small>`);
         }

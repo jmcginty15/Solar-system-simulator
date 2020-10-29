@@ -7,8 +7,10 @@ import { Mesh, Vector3 } from './node_modules/three/src/Three.js';
 $(async function () {
     const BASE_URL = 'http://127.0.0.1:5000';
     let running = false;
-    let startDate = new Date('2020-10-28T20:15:00');
-    let currentDate = new Date('2020-10-28T20:15:00');
+    let startDate = new Date();
+    let currentDate = new Date();
+    let frameCountStart = new Date();
+    let frameCount = 0;
     let elapsedTime = 0;
     let simSpeed = 1;
     resetTimer(startDate);
@@ -38,19 +40,12 @@ $(async function () {
     scene.add(background);
 
     let simBodies = [];
-    let obj1 = 0;
-    let obj2 = 0;
-    let simTime = 0;
 
     let i = 0;
     let time = 0;
     let tstart = false;
     let cameraTarget = null;
 
-    // const cameraZPos = simBodies[1].position[2] + avgRadius(simBodies[1]) * 3
-    // camera.position.set(simBodies[1].position[0], simBodies[1].position[1], simBodies[1].position[2] + 20000000);
-    // camera.position.set(0, 0, 500000000);
-    // camera.position.set(0, 0, 0);    
     var render = function () {
         requestAnimationFrame(render);
         let lastPos = [];
@@ -73,8 +68,6 @@ $(async function () {
             } else {
                 tStep = -1 / (simSpeed - 1);
             }
-
-            console.log(simBodies.length, simSpeed, threshold);
 
             for (let i = 0; i < loops; i++) {
                 const sysTree = new Tree([-2e10, -2e10, -2e10], 4e10);
@@ -116,6 +109,11 @@ $(async function () {
         orbitControls.update();
 
         if (cameraTarget) {
+            console.log(cameraTarget.position);
+            if (cameraTarget instanceof System) {
+                cameraTarget.updatePosition();
+                console.log(cameraTarget.position);
+            }
             newPos = cameraTarget.position;
             delta = [newPos[0] - lastPos[0], newPos[1] - lastPos[1], newPos[2] - lastPos[2]];
             camera.position.x += delta[0];
@@ -125,10 +123,31 @@ $(async function () {
         }
 
         renderer.render(scene, camera);
+
+        // measure and display framerate
+        let frameCountCurrent = new Date();
+        if (frameCountCurrent - frameCountStart >= 1000) {
+            let fps = frameCount / ((frameCountCurrent - frameCountStart) / 1000);
+            if (fps >= 45) {
+                $('#framerate-container').css('color', 'green');
+            } else if (fps >= 30) {
+                $('#framerate-container').css('color', 'yellow');
+            } else {
+                $('#framerate-container').css('color', 'red');
+            }
+            fps = fps.toFixed(2);
+            $('#framerate-container').text(`${fps} fps`);
+            frameCountStart = new Date();
+            frameCount = 0;
+        } else {
+            frameCount += 1;
+        }
     };
 
     render();
-    await loadScene(startDate, '7');
+    $('#loading-screen').show();
+    await loadScene(startDate, 'planets-dwarves');
+    $('#loading-screen').hide();
 
     function plotOrbit(obj, orbiting) {
         const newObj = new Body(obj);
@@ -255,10 +274,6 @@ $(async function () {
             object.rotation.z += theta;
         }
 
-        if (obj.id === 399) {
-            obj2 = object;
-        }
-
         // sceneBodies.push(object);
         obj.model = object;
         scene.add(object);
@@ -266,10 +281,35 @@ $(async function () {
 
     function lookAt(bodyId) {
         const targetBody = getBodyById(bodyId);
-        const distance = avgRadius(targetBody);
-        camera.position.set(targetBody.position[0] + 5 * distance, targetBody.position[1] + 5 * distance, targetBody.position[2] + distance);
-        orbitControls.target = new THREE.Vector3(targetBody.position[0], targetBody.position[1], targetBody.position[2]);
-        return targetBody;
+
+        // if target is a body, set it as the camera target
+        if (targetBody) {
+            const distance = avgRadius(targetBody);
+            camera.position.set(targetBody.position[0] + 5 * distance, targetBody.position[1] + 5 * distance, targetBody.position[2] + distance);
+            orbitControls.target = new THREE.Vector3(targetBody.position[0], targetBody.position[1], targetBody.position[2]);
+            return targetBody;
+        } else {
+            // if target is not a body, getBodyById will return null
+            // and we will set the camera target to the selected system barycenter
+
+            // first, construct the list of bodies in the system
+            let systemBodies = [];
+            if (bodyId === 0) {
+                systemBodies = simBodies;
+            } else {
+                for (let body of simBodies) {
+                    if (body.id.toString()[0] === bodyId.toString()) {
+                        systemBodies.push(body);
+                    }
+                }
+            }
+            const system = new System(bodyId, systemBodies);
+            system.updatePosition();
+            const distance = system.radius;
+            camera.position.set(system.position[0] + 1.25 * distance, system.position[1] + 1.25 * distance, system.position[2] + 0.5 * distance);
+            orbitControls.target = new THREE.Vector3(system.position[0], system.position[1], system.position[2]);
+            return system;
+        }
     }
 
     function getBodyById(bodyId) {
@@ -313,6 +353,7 @@ $(async function () {
         sceneObject.add(cloudSphere);
     }
 
+    // event listener for play-pause button
     $('#play-pause').on('click', function () {
         if (running) {
             running = false;
@@ -322,11 +363,6 @@ $(async function () {
             running = true;
             tstart = true;
         }
-    });
-
-    $('#look').on('click', function () {
-        const bodyId = parseInt($('#body-id').val());
-        cameraTarget = lookAt(bodyId);
     });
 
     // event listener for window resize
@@ -343,11 +379,11 @@ $(async function () {
         running = false;
         $('#play-pause').html('&#9205');
         $('#object-info').html('<h4>No object selected</h4>');
+        $('#loading-screen').show();
 
         const date = $('#date').val();
         const time = $('#time').val();
         const bodySet = $('#object-set').val();
-        console.log(bodySet);
 
         startDate = new Date(`${date}T${time}`);
         currentDate = new Date(`${date}T${time}`);
@@ -355,6 +391,7 @@ $(async function () {
         clearScene();
         resetTimer(startDate);
         await loadScene(startDate, bodySet);
+        $('#loading-screen').hide();
     });
 
     // event listener for range slider change
@@ -362,25 +399,27 @@ $(async function () {
         simSpeed = parseInt($('#speed-slider').val());
     });
 
-    // event listener for expanding and collapsing system selection lists
+    // event listener for expanding and collapsing system selection lists and viewing objects
     $('#object-select').on('click', function (evt) {
         const $target = $(evt.target);
 
         if ($target.hasClass('object-selector')) {
             const id = $target.attr('id');
 
-            if (id.length > 1 || id === '1') {
-                cameraTarget = lookAt(parseInt(id));
+            cameraTarget = lookAt(parseInt(id));
+            if (cameraTarget instanceof Body) {
                 updateObjectInfo(cameraTarget);
+            } else {
+                updateSystemInfo(cameraTarget);
             }
         } else if ($target.parent().hasClass('system-selector')) {
             const $li = $target.parent().parent();
-            
+
             if ($li.hasClass('collapsed')) {
                 $li.removeClass('collapsed');
                 const $icon = $li.find('.icon');
                 $icon.html('&#9652');
-                
+
                 for (let item of $li.find('li')) {
                     const $item = $(item);
                     $item.removeClass('hidden');
@@ -396,6 +435,27 @@ $(async function () {
                 }
             }
         }
+    });
+
+    // event listener for info icon
+    $('#info-icon').on('click', function () {
+        $('#app-info').show();
+    });
+
+    // event listener for closing app-info
+    $('#close-button').on('click', function () {
+        $('#app-info').hide();
+    });
+
+    // event listener for development info button
+    $('#about-link').on('click', function () {
+        $('#app-info').hide();
+        $('#development-info').show();
+    });
+
+    // event listener for closing development-info
+    $('#close-button-2').on('click', function () {
+        $('#development-info').hide();
     });
 
     // function to clear all objects from scene

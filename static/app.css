@@ -29,7 +29,7 @@ body {
     display: block;
     color: white;
     background-color: black;
-    opacity: 0.25;
+    opacity: 0.35;
     border-color: white;
     border-style: outset;
     border-radius: 15px;
@@ -43,9 +43,102 @@ body {
     transition: opacity 250ms;
 }
 
-.control-box:hover {
+.control-box:hover, #control-info:hover {
     opacity: 0.75;
     transition: opacity 250ms;
+}
+
+#info-icon {
+    font-weight: normal;
+}
+
+#info-icon:hover {
+    cursor: pointer;
+}
+
+#loading-screen {
+    height: 50%;
+    width: 50%;
+    position: absolute;
+    top: 25%;
+    left: 25%;
+    color: white;
+    background-color: black;
+    opacity: 0.75;
+    border-color: white;
+    border-style: outset;
+    border-radius: 15px;
+    z-index: 12;
+    padding: 10px;
+    display: none;
+}
+
+#loading-content {
+    height: fit-content;
+    width: fit-content;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -70%);
+    display: block;
+    text-align: center;
+}
+
+#app-info, #development-info {
+    height: fit-content;
+    width: fit-content;
+    max-width: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    background-color: black;
+    opacity: 0.75;
+    border-color: white;
+    border-style: outset;
+    border-radius: 15px;
+    z-index: 12;
+    padding: 10px;
+    display: none;
+}
+
+#about-link {
+    text-decoration: underline;
+    text-align: center;
+}
+
+#about-link:hover {
+    cursor: pointer;
+}
+
+#info-title, #development-title {
+    text-align: center;
+}
+
+.info-paragraph {
+    text-align: justify;
+    margin-bottom: 5px;
+    margin-top: 5px;
+}
+
+.info-centered {
+    text-align: center;
+}
+
+a {
+    color: white;
+}
+
+#close-button, #close-button-2 {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+#close-button:hover, #close-button-2:hover {
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 #right-controls {
@@ -174,8 +267,37 @@ button {
     max-height: 75%;
 }
 
+#info-subtitle {
+    margin-bottom: 5px;
+}
+
 #controls {
     margin-top: 5px;
+}
+
+#control-info {
+    position: fixed;
+    top: 0px;
+    left: 23%;
+    height: fit-content;
+    width: fit-content;
+    font-size: smaller;
+    color: white;
+    background-color: black;
+    opacity: 0.35;
+    border-color: white;
+    border-style: outset;
+    border-radius: 15px;
+    z-index: 10;
+    margin: 10px;
+    padding: 5px;
+    object-fit: cover;
+    transition: opacity 250ms;
+    display: inline-block;
+}
+
+#framerate-container {
+    color: green;
 }
 
 /* #speed-slider {
