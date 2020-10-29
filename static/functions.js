@@ -67,3 +67,165 @@ function parseDateTime(datetime) {
 
     return `${month}/${day}/${year} ${hour}:${minute}`;
 }
+
+// function to update selection list
+function loadSelectList(bodySet, bodyList) {
+    $('#object-select').empty();
+    $('#object-select').append('<ul id="object-list"><li id="0" class="object-selector">Coordinate center</li></ul>');
+
+    const simpleOptions = ['planets', 'dwarves', 'planets-dwarves'];
+    const systemOptions = ['full', 'inner', 'outer', '3', '4', '5', '6', '7', '8', '9'];
+
+    if (simpleOptions.includes(bodySet)) {
+        for (let body of bodyList) {
+            let name = null;
+            if (body.name) {
+                name = body.name;
+            } else {
+                name = body.designation;
+            }
+
+            let bodyClass = 'object-selector';
+            if (!body.available) {
+                bodyClass += '-unavailable';
+            }
+
+            const $nextItem = $(`<li id="${body.id}" class="${bodyClass}">${name}</li>`);
+            $('#object-list').append($nextItem);
+        }
+    } else if (systemOptions.includes(bodySet)) {
+        const independentIds = [10, 199, 299, 1, 136108, 136199, 136472];
+
+        const $earth = $('<li class="collapsed"><span class="system-selector"><b>Earth-Moon system</b> <span class="icon">&#9662</span></span><ul class="object-container"><li id="3" class="object-selector indented hidden">System barycenter</li></ul></li>');
+        const $martian = $('<li class="collapsed"><span class="system-selector"><b>Martian system</b> <span class="icon">&#9662</span></span><ul class="object-container"><li id="4" class="object-selector indented hidden">System barycenter</li></ul></li>');
+        const $jovian = $('<li class="collapsed"><span class="system-selector"><b>Jovian system</b> <span class="icon">&#9662</span></span><ul class="object-container"><li id="5" class="object-selector indented hidden">System barycenter</li></ul></li>');
+        const $saturnian = $('<li class="collapsed"><span class="system-selector"><b>Saturnian system</b> <span class="icon">&#9662</span></span><ul class="object-container"><li id="6" class="object-selector indented hidden">System barycenter</li></ul></li>');
+        const $uranian = $('<li class="collapsed"><span class="system-selector"><b>Uranian system</b> <span class="icon">&#9662</span></span><ul class="object-container"><li id="7" class="object-selector indented hidden">System barycenter</li></ul></li>');
+        const $neptunian = $('<li class="collapsed"><span class="system-selector"><b>Neptunian system</b> <span class="icon">&#9662</span></span><ul class="object-container"><li id="8" class="object-selector indented hidden">System barycenter</li></ul></li>');
+        const $plutonian = $('<li class="collapsed"><span class="system-selector"><b>Plutonian system</b> <span class="icon">&#9662</span></span><ul class="object-container"><li id="9" class="object-selector indented hidden">System barycenter</li></ul></li>');
+
+        const objectSelectors = {
+            3: { li: $earth, appended: false },
+            4: { li: $martian, appended: false },
+            5: { li: $jovian, appended: false },
+            6: { li: $saturnian, appended: false },
+            7: { li: $uranian, appended: false },
+            8: { li: $neptunian, appended: false },
+            9: { li: $plutonian, appended: false }
+        };
+
+        for (let body of bodyList) {
+            let name = null;
+            if (body.name) {
+                name = body.name;
+            } else {
+                name = body.designation;
+            }
+
+            let bodyClass = 'object-selector';
+            if (!body.available) {
+                bodyClass += '-unavailable';
+            }
+
+            const $nextItem = $(`<li id="${body.id}" class="${bodyClass}">${name}</li>`);
+
+            if (independentIds.includes(body.id)) {
+                $('#object-list').append($nextItem);
+            } else {
+                const sys = body.id.toString()[0];
+
+                if (!objectSelectors[sys].appended) {
+                    $(`#object-list`).append(objectSelectors[sys].li);
+                    objectSelectors[sys].appended = true;
+                }
+
+                $nextItem.addClass('indented');
+                $nextItem.addClass('hidden');
+                $(`#${sys}`).parent().append($nextItem);
+            }
+        }
+    }
+}
+
+// function to display information about selected object
+function updateObjectInfo(body) {
+    $infoBox = $('#object-info');
+    $infoBox.empty();
+
+    if (body.name) {
+        const $name = $(`<h3>${body.name}</h3>`);
+        if (body.designation) {
+            $name.append(`<small class="right-float"><em>${body.designation}</em></small>`);
+        }
+        $infoBox.append($name);
+    } else {
+        $infoBox.append(`<h3>${body.designation}</h3>`);
+    }
+
+    if (body.obj_type) {
+        const $type = $(`<p class="info-box-small">${body.obj_type}</p>`);
+        
+        if (body.sat_type) {
+            $type.append(`<small class="right-float"><em>${body.sat_type}</em></small>`);
+        }
+
+        $infoBox.append($type);
+    }
+
+    let mass = body.mass;
+    let massLabel = '';
+    if (mass >= 1e+3 && mass < 1e+6) {
+        mass /= 1e+3;
+        massLabel = ' thousand';
+    } else if (mass < 1e+9) {
+        mass /= 1e+6;
+        massLabel = ' million';
+    } else if (mass < 1e+12) {
+        mass /= 1e+9;
+        massLabel = ' billion';
+    } else if (mass < 1e+15) {
+        mass /= 1e+12;
+        massLabel = ' trillion';
+    } else if (mass < 1e+18) {
+        mass /= 1e+15;
+        massLabel = ' quadrillion';
+    } else if (mass < 1e+21) {
+        mass /= 1e+18;
+        massLabel = ' quintillion';
+    } else if (mass < 1e+24) {
+        mass /= 1e+21;
+        massLabel = ' sextillion';
+    } else if (mass < 1e+27) {
+        mass /= 1e+24;
+        massLabel = ' septillion';
+    } else if (mass < 1e+30) {
+        mass /= 1e+27;
+        massLabel = ' octillion';
+    } else if (mass >= 1e+30) {
+        mass /= 1e+30;
+        massLabel = ' nonillion';
+    }
+    mass = +mass.toFixed(2);
+
+    const $mass = $(`<p class="info-box-small"><b>Mass:</b> <em class="right-float">${mass + massLabel} kg</em></p>`);
+    $infoBox.append($mass);
+
+    let diameter = 2 * avgRadius(body);
+    let diameterLabel = '';
+    if (diameter >= 1e+6 && diameter < 1e+9) {
+        diameter /= 1e+6;
+        diameterLabel = ' million';
+    } else if (mass >= 1e+9) {
+        diameter /= 1e+9;
+        diameterLabel = ' billion';
+    }
+    diameter = +diameter.toFixed(2);
+
+    const $diameter = $(`<p class="info-box-small"><b>Avg diameter:</b> <em class="right-float">${diameter + diameterLabel} km</em></p>`)
+    $infoBox.append($diameter);
+}
+
+// function to find average radius of a given body
+function avgRadius(obj) {
+    return obj.dimensions.reduce((a, b) => a + b) / obj.dimensions.length;
+}

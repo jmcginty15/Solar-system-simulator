@@ -7,8 +7,8 @@ import { Mesh, Vector3 } from './node_modules/three/src/Three.js';
 $(async function () {
     const BASE_URL = 'http://127.0.0.1:5000';
     let running = false;
-    let startDate = new Date();
-    let currentDate = new Date();
+    let startDate = new Date('2020-10-28T20:15:00');
+    let currentDate = new Date('2020-10-28T20:15:00');
     let elapsedTime = 0;
     let simSpeed = 1;
     resetTimer(startDate);
@@ -41,9 +41,6 @@ $(async function () {
     let obj1 = 0;
     let obj2 = 0;
     let simTime = 0;
-
-    var axes = new THREE.AxesHelper(100000000000);
-    scene.add(axes);
 
     let i = 0;
     let time = 0;
@@ -94,13 +91,19 @@ $(async function () {
                         body.updateAcceleration();
                         body.updateVelocity(tStep);
                         body.updatePosition(tStep);
-                        body.updateModel(tStep);
+                        // body.updateModel(tStep);
                     }
                 }
 
                 const dist = Math.sqrt((newPos[0] - lastPos[0]) ** 2 + (newPos[1] - lastPos[1]) ** 2 + (newPos[2] - lastPos[2]) ** 2);
 
                 currentDate = new Date(currentDate.getTime() + tStep * 1000);
+            }
+
+            for (let body of simBodies) {
+                if (body.available) {
+                    body.updateModel(tStep * loops);
+                }
             }
         } else {
             delta = [0, 0, 0];
@@ -125,11 +128,7 @@ $(async function () {
     };
 
     render();
-    await loadScene(startDate, '9');
-
-    function avgRadius(obj) {
-        return obj.dimensions.reduce((a, b) => a + b) / obj.dimensions.length;
-    }
+    await loadScene(startDate, '7');
 
     function plotOrbit(obj, orbiting) {
         const newObj = new Body(obj);
@@ -343,10 +342,12 @@ $(async function () {
         evt.stopPropagation();
         running = false;
         $('#play-pause').html('&#9205');
+        $('#object-info').html('<h4>No object selected</h4>');
 
         const date = $('#date').val();
         const time = $('#time').val();
         const bodySet = $('#object-set').val();
+        console.log(bodySet);
 
         startDate = new Date(`${date}T${time}`);
         currentDate = new Date(`${date}T${time}`);
@@ -359,6 +360,42 @@ $(async function () {
     // event listener for range slider change
     $('#speed-slider').on('change', function () {
         simSpeed = parseInt($('#speed-slider').val());
+    });
+
+    // event listener for expanding and collapsing system selection lists
+    $('#object-select').on('click', function (evt) {
+        const $target = $(evt.target);
+
+        if ($target.hasClass('object-selector')) {
+            const id = $target.attr('id');
+
+            if (id.length > 1 || id === '1') {
+                cameraTarget = lookAt(parseInt(id));
+                updateObjectInfo(cameraTarget);
+            }
+        } else if ($target.parent().hasClass('system-selector')) {
+            const $li = $target.parent().parent();
+            
+            if ($li.hasClass('collapsed')) {
+                $li.removeClass('collapsed');
+                const $icon = $li.find('.icon');
+                $icon.html('&#9652');
+                
+                for (let item of $li.find('li')) {
+                    const $item = $(item);
+                    $item.removeClass('hidden');
+                }
+            } else {
+                $li.addClass('collapsed');
+                const $icon = $li.find('.icon');
+                $icon.html('&#9662');
+
+                for (let item of $li.find('li')) {
+                    const $item = $(item);
+                    $item.addClass('hidden');
+                }
+            }
+        }
     });
 
     // function to clear all objects from scene
@@ -413,5 +450,7 @@ $(async function () {
                 addToScene(nextBody);
             }
         }
+
+        loadSelectList(bodySet, simBodies);
     }
 });
