@@ -264,3 +264,15 @@ function updateObjectInfo(body) {
 function avgRadius(obj) {
     return obj.dimensions.reduce((a, b) => a + b) / obj.dimensions.length;
 }
+
+// function to reset loading screen
+function resetLoadingScreen() {
+    $('#loading-screen').hide();
+    $('#loading-screen').empty();
+    $('#loading-screen').html(`<div id="loading-content">
+            <h1>Loading objects...</h1>
+            <p id="object-system-container"></p>
+            <div id="progress-bar"><div id="finished-bar"></div></div>
+            <div id="percent-indicator">0%</div>
+        </div>`);
+}

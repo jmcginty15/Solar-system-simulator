@@ -70,7 +70,27 @@ body {
     border-radius: 15px;
     z-index: 12;
     padding: 10px;
-    display: none;
+    /* display: none; */
+}
+
+#progress-bar {
+    background-color: black;
+    border-color: white;
+    border-style: solid;
+    border-width: 1px;
+    height: 1em;
+    width: 99%;
+    margin-top: 10px;
+}
+
+#percent-indicator {
+    margin-top: 10px;
+}
+
+#finished-bar {
+    height: 100%;
+    width: 0%;
+    background-color: white;
 }
 
 #loading-content {
@@ -257,6 +277,10 @@ button {
 
 .right-float {
     float: right;
+}
+
+.left-float {
+    float: left;
 }
 
 .info-box-small {

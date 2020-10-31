@@ -19,10 +19,17 @@ db.create_all()
 def home():
     return render_template('base.html')
 
-@app.route('/object/<int:obj_id>')
+@app.route('/bodies/<int:obj_id>')
 def get_object(obj_id):
-    date = datetime.datetime(2000, 6, 21, 12, 0)
-    return jsonify(get_obj_vectors(obj_id, 0, date))
+    year = int(request.args['year'])
+    month = int(request.args['month'])
+    day = int(request.args['day'])
+    hour = int(request.args['hour'])
+    minute = int(request.args['minute'])
+    second = int(request.args['second'])
+
+    date_time = datetime.datetime(year, month, day, hour, minute, second)
+    return jsonify(get_obj_vectors(obj_id, 0, date_time))
 
 @app.route('/bodies')
 def get_bodies():
@@ -48,6 +55,7 @@ def get_objects(sys_id):
 
 @app.route('/images/<path:img_path>')
 def get_image(img_path):
+    """Returns the image file located at the given path"""
     return send_file(f'images/{img_path}')
 
 @app.route('/barnes-hut-test')

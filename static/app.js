@@ -1,11 +1,11 @@
 import * as THREE from './node_modules/three/src/Three.js';
-import { FlyControls } from './node_modules/three/examples/jsm/controls/FlyControls.js';
 import { OrbitControls } from './node_modules/three/examples/jsm/controls/OrbitControls.js';
-import { TrackballControls } from './node_modules/three/examples/jsm/controls/TrackballControls.js';
 import { Mesh, Vector3 } from './node_modules/three/src/Three.js';
 
 $(async function () {
     const BASE_URL = 'http://127.0.0.1:5000';
+    // const BODY_SETS = loadBodySets();
+    // console.log(BODY_SETS);
     let running = false;
     let startDate = new Date();
     let currentDate = new Date();
@@ -19,9 +19,8 @@ $(async function () {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.0000000001, 2400000000000);
     camera.up = new THREE.Vector3(0, 0, 1);
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ logarithmicDepthBuffer: true, physicallyCorrectLights: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.sortObjects = false;
     viewport.appendChild(renderer.domElement);
 
     const orbitControls = new OrbitControls(camera, viewport);
@@ -84,7 +83,6 @@ $(async function () {
                         body.updateAcceleration();
                         body.updateVelocity(tStep);
                         body.updatePosition(tStep);
-                        // body.updateModel(tStep);
                     }
                 }
 
@@ -109,10 +107,8 @@ $(async function () {
         orbitControls.update();
 
         if (cameraTarget) {
-            console.log(cameraTarget.position);
             if (cameraTarget instanceof System) {
                 cameraTarget.updatePosition();
-                console.log(cameraTarget.position);
             }
             newPos = cameraTarget.position;
             delta = [newPos[0] - lastPos[0], newPos[1] - lastPos[1], newPos[2] - lastPos[2]];
@@ -145,9 +141,7 @@ $(async function () {
     };
 
     render();
-    $('#loading-screen').show();
-    await loadScene(startDate, 'planets-dwarves');
-    $('#loading-screen').hide();
+    await loadScene(startDate, '3');
 
     function plotOrbit(obj, orbiting) {
         const newObj = new Body(obj);
@@ -210,6 +204,7 @@ $(async function () {
         // object.add(new THREE.AxesHelper(10000000));
         object.add(objectMesh);
 
+        // for the Sun, add spotlights to illuminate the sun and a point light as the light source for the system
         if (obj.id === 10) {
             var sunLight = new THREE.PointLight(0xffffff, 1);
             sunLight.position.set(obj.position[0], obj.position[1], obj.position[2]);
@@ -243,10 +238,12 @@ $(async function () {
             object.receiveShadow = true;
         }
 
+        // if the body has rings, call the function to add them
         if (obj.ring_inner_radius) {
             addRings(obj, object);
         }
 
+        // if the body has a texture for a cloud map, call the function to add it
         if (obj.cloud_map) {
             addClouds(obj, object, rx, yScale, zScale);
         }
@@ -262,7 +259,13 @@ $(async function () {
 
         // for Earth, apply rotation to align object according to time of day
         if (obj.id === 399) {
-            object.rotation.z += Math.PI;
+            const sun = getBodyById(10);
+            const relX = sun.position[0] - obj.position[0];
+            const relY = sun.position[1] - obj.position[1];
+            const theta = Math.atan2(relY, relX);
+            const time = startDate.getUTCHours() + startDate.getUTCMinutes() / 60 + startDate.getUTCSeconds() / 3600;
+            const timeFraction = time / 24;
+            object.rotation.z += theta + (Math.PI / 2) + (2 * Math.PI * timeFraction) - Math.PI;
         }
 
         // for Moon, apply rotation to align correct side with Earth
@@ -349,6 +352,7 @@ $(async function () {
         cloudMaterial.alphaMap = new THREE.TextureLoader().load(body.cloud_transparency);
         cloudMaterial.transparent = true;
         const cloudSphere = new THREE.Mesh(cloudGeometry, cloudMaterial);
+        cloudSphere.rotation.x = Math.PI / 2;
 
         sceneObject.add(cloudSphere);
     }
@@ -379,7 +383,6 @@ $(async function () {
         running = false;
         $('#play-pause').html('&#9205');
         $('#object-info').html('<h4>No object selected</h4>');
-        $('#loading-screen').show();
 
         const date = $('#date').val();
         const time = $('#time').val();
@@ -391,7 +394,6 @@ $(async function () {
         clearScene();
         resetTimer(startDate);
         await loadScene(startDate, bodySet);
-        $('#loading-screen').hide();
     });
 
     // event listener for range slider change
@@ -484,6 +486,8 @@ $(async function () {
 
     // function to load new scene
     async function loadScene(datetime, bodySet) {
+        $('#loading-screen').show();
+
         const year = datetime.getUTCFullYear();
         const month = datetime.getUTCMonth() + 1;
         const day = datetime.getUTCDate();
@@ -491,26 +495,81 @@ $(async function () {
         const minute = datetime.getUTCMinutes();
         const second = datetime.getUTCSeconds();
 
-        const res = await axios.get(`${BASE_URL}/bodies`, {
-            params: {
-                'year': year,
-                'month': month,
-                'day': day,
-                'hour': hour,
-                'minute': minute,
-                'second': second,
-                'object_set': bodySet
-            }
-        });
+        let bodyList = null;
+        if (bodySet === 'full') {
+            bodyList = FULL;
+        } else if (bodySet === 'inner') {
+            bodyList = INNER;
+        } else if (bodySet === 'outer') {
+            bodyList = OUTER;
+        } else if (bodySet === 'planets') {
+            bodyList = PLANETS;
+        } else if (bodySet === 'dwarves') {
+            bodyList = DWARVES;
+        } else if (bodySet === 'planets-dwarves') {
+            bodyList = PLANETS_DWARVES;
+        } else if (bodySet === '3') {
+            bodyList = EARTH_MOON_SYS;
+        } else if (bodySet === '4') {
+            bodyList = MARTIAN_SYS;
+        } else if (bodySet === '5') {
+            bodyList = JOVIAN_SYS;
+        } else if (bodySet === '6') {
+            bodyList = SATURNIAN_SYS;
+        } else if (bodySet === '7') {
+            bodyList = URANIAN_SYS;
+        } else if (bodySet === '8') {
+            bodyList = NEPTUNIAN_SYS;
+        } else if (bodySet === '9') {
+            bodyList = PLUTONIAN_SYS;
+        }
 
-        for (let body of res.data) {
+        let systemBox = true;
+        $('#object-system-container').html('<b id="system-container" class="left-float"></b><em id="object-container" class="right-float"></em>');
+        if (['planets', 'dwarves', 'planets-dwarves'].includes(bodySet)) {
+            systemBox = false;
+            $('#object-system-container').empty();
+        }
+
+        const totalObjects = bodyList.length;
+        let i = 0;
+        for (let queryObj of bodyList) {
+            if (systemBox) {
+                if (queryObj.sysName) {
+                    $('#system-container').text(queryObj.sysName);
+                } else {
+                    $('#system-container').empty();
+                }
+                $('#object-container').text(queryObj.name);
+            } else {
+                $('#object-system-container').text(queryObj.name);
+            }
+
+            const res = await axios.get(`${BASE_URL}/bodies/${queryObj.id}`, {
+                params: {
+                    'year': year,
+                    'month': month,
+                    'day': day,
+                    'hour': hour,
+                    'minute': minute,
+                    'second': second,
+                    'object_set': bodySet
+                }
+            });
+            const body = res.data;
             const nextBody = new Body(body);
             simBodies.push(nextBody);
             if (body.available) {
                 addToScene(nextBody);
             }
+
+            i += 1;
+            let percentage = (i / totalObjects) * 100;
+            $('#finished-bar').width(`${percentage}%`);
+            $('#percent-indicator').text(`${+percentage.toFixed(2)}%`);
         }
 
+        resetLoadingScreen();
         loadSelectList(bodySet, simBodies);
     }
 });
