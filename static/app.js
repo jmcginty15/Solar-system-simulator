@@ -131,7 +131,48 @@ $(async function () {
         if (cameraTarget) {
             if (cameraTarget instanceof System) {
                 cameraTarget.updatePosition();
+                cameraTarget.updateVelocity();
             }
+
+            if (cameraTarget.id != 0 && cameraTarget.id != 10) {
+                let sunDistance = cameraTarget.getDistance(simBodies[0]);
+                let sunDistanceLabel = '';
+                if (sunDistance >= 1e+6 && sunDistance < 1e+9) {
+                    sunDistance /= 1e+6;
+                    sunDistanceLabel = ' million';
+                } else if (sunDistance >= 1e+9) {
+                    sunDistance /= 1e+9;
+                    sunDistanceLabel = ' billion';
+                }
+                sunDistance = +sunDistance.toFixed(2);
+                $('#sun-distance').text(`${sunDistance + sunDistanceLabel} km`);
+
+                const primaryId = parseInt(cameraTarget.id.toString()[0] + '99');
+                if (primaryId === cameraTarget.id || cameraTarget instanceof System) {
+                    let speed = cameraTarget.getOrbitalSpeed(simBodies[0]);
+                    speed = +speed.toFixed(2);
+                    $('#orbital-speed').text(`${speed} km/s`);
+                } else {
+                    const primary = getBodyById(primaryId);
+
+                    let primaryDistance = cameraTarget.getDistance(primary);
+                    let primaryDistanceLabel = '';
+                    if (primaryDistance >= 1e+6 && primaryDistance < 1e+9) {
+                        primaryDistance /= 1e+6;
+                        primaryDistanceLabel = ' million';
+                    } else if (primaryDistance >= 1e+9) {
+                        primaryDistance /= 1e+9;
+                        sunDistanceLabel = ' billion';
+                    }
+                    primaryDistance = +primaryDistance.toFixed(2);
+                    $('#primary-distance').text(`${primaryDistance + primaryDistanceLabel} km`); 
+                    
+                    let speed = cameraTarget.getOrbitalSpeed(primary);
+                    speed = +speed.toFixed(2);
+                    $('#orbital-speed').text(`${speed} km/s`);
+                }
+            }
+
             newPos = cameraTarget.position;
             delta = [newPos[0] - lastPos[0], newPos[1] - lastPos[1], newPos[2] - lastPos[2]];
             camera.position.x += delta[0];
@@ -330,6 +371,7 @@ $(async function () {
             }
             const system = new System(bodyId, systemBodies);
             system.updatePosition();
+            system.updateVelocity();
             const distance = system.radius;
             camera.position.set(system.position[0] + 1.25 * distance, system.position[1] + 1.25 * distance, system.position[2] + 0.5 * distance);
             orbitControls.target = new THREE.Vector3(system.position[0], system.position[1], system.position[2]);
@@ -403,6 +445,7 @@ $(async function () {
         evt.preventDefault();
         evt.stopPropagation();
         running = false;
+        cameraTarget = null;
         $playPauseButton.html('&#9205');
         $objectInfo.html('<h4>No object selected</h4>');
 
@@ -432,9 +475,14 @@ $(async function () {
 
             cameraTarget = lookAt(parseInt(id));
             if (cameraTarget instanceof Body) {
-                updateObjectInfo(cameraTarget);
+                const primaryId = parseInt(cameraTarget.id.toString()[0] + '99');
+                let primary = null;
+                if (cameraTarget.id != primaryId && ![1, 136108, 136199, 136472].includes(cameraTarget.id)) {
+                    primary = getBodyById(primaryId);
+                }
+                updateObjectInfo(cameraTarget, simBodies[0], primary);
             } else {
-                updateSystemInfo(cameraTarget);
+                updateSystemInfo(cameraTarget, simBodies[0]);
             }
         } else if ($target.parent().hasClass('system-selector')) {
             const $li = $target.parent().parent();
@@ -486,12 +534,12 @@ $(async function () {
     $showHideButton.on('click', function () {
         if (overlayHidden) {
             $overlayClass.show();
-            $showHideOverlay.css({left: '23%'});
+            $showHideOverlay.css({ left: '23%' });
             $showHideButton.text('Hide overlay');
             overlayHidden = false;
         } else {
             $overlayClass.hide();
-            $showHideOverlay.css({left: '0%'});
+            $showHideOverlay.css({ left: '0%' });
             $showHideButton.text('Show overlay');
             overlayHidden = true;
         }
@@ -590,7 +638,6 @@ $(async function () {
                     'hour': hour,
                     'minute': minute,
                     'second': second,
-                    'object_set': bodySet
                 }
             });
             const body = res.data;

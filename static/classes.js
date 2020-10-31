@@ -86,6 +86,16 @@ class Body {
         }
     }
 
+    getDistance(primary) {
+        // calculates the object's distance to another body
+        return Math.sqrt((this.position[0] - primary.position[0])**2 + (this.position[1] - primary.position[1])**2 + (this.position[2] - primary.position[2])**2);
+    }
+
+    getOrbitalSpeed(primary) {
+        // calculates the object's speed relative to another body
+        return Math.sqrt((this.velocity[0] - primary.velocity[0])**2 + (this.velocity[1] - primary.velocity[1])**2 + (this.velocity[2] - primary.velocity[2])**2);
+    }
+
     orbitalParams(orbiting) {
         // calculates the object's orbital elements with reference to its primary body
         const G = 6.67408e-20;
@@ -147,6 +157,7 @@ class System {
         this.bodies = bodyList;
         this.primary = this.bodies[0];
         this.position = [0, 0, 0];
+        this.velocity = [0, 0, 0];
 
         if (id === 0) {
             this.name = 'Solar';
@@ -192,6 +203,35 @@ class System {
         posMass[2] /= totalMass;
         this.position = posMass;
         return posMass;
+    }
+
+    updateVelocity() {
+        // updates the system barycenter's velocity according to the bodies it contains
+        let totalMass = 0;
+        const velMass = [0, 0, 0];
+        for (let body of this.bodies) {
+            if (body.available) {
+                totalMass += body.mass;
+                velMass[0] += body.velocity[0] * body.mass;
+                velMass[1] += body.velocity[1] * body.mass;
+                velMass[2] += body.velocity[2] * body.mass;
+            }
+        }
+        velMass[0] /= totalMass;
+        velMass[1] /= totalMass;
+        velMass[2] /= totalMass;
+        this.velocity = velMass;
+        return velMass;
+    }
+
+    getDistance(primary) {
+        // calculates the distance from the system barycenter to another body
+        return Math.sqrt((this.position[0] - primary.position[0])**2 + (this.position[1] - primary.position[1])**2 + (this.position[2] - primary.position[2])**2);
+    }
+
+    getOrbitalSpeed(primary) {
+        // calculates the speed of the system barycenter relative to another body
+        return Math.sqrt((this.velocity[0] - primary.velocity[0])**2 + (this.velocity[1] - primary.velocity[1])**2 + (this.velocity[2] - primary.velocity[2])**2);
     }
 }
 

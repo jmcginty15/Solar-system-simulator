@@ -148,7 +148,7 @@ function loadSelectList(bodySet, bodyList) {
 }
 
 // function to display information about selected system
-function updateSystemInfo(system) {
+function updateSystemInfo(system, sun) {
     $infoBox = $('#object-info');
     $infoBox.empty();
 
@@ -180,10 +180,32 @@ function updateSystemInfo(system) {
     radius = +radius.toFixed(2);
 
     $infoBox.append(`<p class="info-box-small"><b>Approx radius:</b> <em class="right-float">${radius + radiusLabel} km</em></p>`);
+
+    // if system is not the whole solar system, display its distance to the Sun and orbital speed
+    if (system.id != 0) {
+        let sunDistance = system.getDistance(sun);
+        let sunDistanceLabel = '';
+        if (sunDistance >= 1e+6 && sunDistance < 1e+9) {
+            sunDistance /= 1e+6;
+            sunDistanceLabel = ' million';
+        } else if (sunDistance >= 1e+9) {
+            sunDistance /= 1e+9;
+            sunDistanceLabel = ' billion';
+        }
+        sunDistance = +sunDistance.toFixed(2);
+        
+        const $sunDistance = $(`<p class="info-box-small"><b>Distance to Sun:</b> <em id="sun-distance" class="right-float">${sunDistance + sunDistanceLabel} km</em></p>`);
+        $infoBox.append($sunDistance);
+    
+        let speed = system.getOrbitalSpeed(sun);
+        speed = +speed.toFixed(2);
+        const $speed = $(`<p class="info-box-small"><b>Orbital speed:</b> <em id="orbital-speed" class="right-float">${speed} km/s</em></p>`);
+        $infoBox.append($speed);
+    }
 }
 
 // function to display information about selected object
-function updateObjectInfo(body) {
+function updateObjectInfo(body, sun, primary) {
     $infoBox = $('#object-info');
     $infoBox.empty();
 
@@ -198,7 +220,7 @@ function updateObjectInfo(body) {
     }
 
     if (body.obj_type) {
-        const $type = $(`<p id="info-subtitle" class="info-box-small">${body.obj_type}</p>`);
+        const $type = $(`<p id="info-subtitle" class="info-box-small"><small>${body.obj_type}</small></p>`);
 
         if (body.sat_type) {
             $type.append(`<small class="right-float"><em>${body.sat_type}</em></small>`);
@@ -256,8 +278,55 @@ function updateObjectInfo(body) {
     }
     diameter = +diameter.toFixed(2);
 
-    const $diameter = $(`<p class="info-box-small"><b>Avg diameter:</b> <em class="right-float">${diameter + diameterLabel} km</em></p>`)
+    const $diameter = $(`<p class="info-box-small"><b>Avg diameter:</b> <em class="right-float">${diameter + diameterLabel} km</em></p>`);
     $infoBox.append($diameter);
+
+    // if body is not the Sun, display current distance to sun
+    if (body.id != 10) {
+        let sunDistance = body.getDistance(sun);
+        let sunDistanceLabel = '';
+        if (sunDistance >= 1e+6 && sunDistance < 1e+9) {
+            sunDistance /= 1e+6;
+            sunDistanceLabel = ' million';
+        } else if (sunDistance >= 1e+9) {
+            sunDistance /= 1e+9;
+            sunDistanceLabel = ' billion';
+        }
+        sunDistance = +sunDistance.toFixed(2);
+        
+        const $sunDistance = $(`<p class="info-box-small"><b>Distance to Sun:</b> <em id="sun-distance" class="right-float">${sunDistance + sunDistanceLabel} km</em></p>`);
+        $infoBox.append($sunDistance);
+
+        // if body is a moon, display current distance to its primary body
+        if (primary) {
+            let primaryDistance = body.getDistance(primary);
+            let primaryDistanceLabel = '';
+            if (primaryDistance >= 1e+6 && primaryDistance < 1e+9) {
+                primaryDistance /= 1e+6;
+                primaryDistanceLabel = ' million';
+            } else if (primaryDistance >= 1e+9) {
+                primaryDistance /= 1e+9;
+                primaryDistanceLabel = ' billion';
+            }
+            primaryDistance = +primaryDistance.toFixed(2);
+
+            const $primaryDistance = $(`<p class="info-box-small"><b>Distance to ${primary.name}:</b> <em id="primary-distance" class="right-float">${primaryDistance + primaryDistanceLabel} km</em></p>`);
+            $infoBox.append($primaryDistance);
+        }
+
+        // if body is a moon, display current speed relative to its primary body
+        // else display current speed relative to the Sun
+        let speed = 0;
+        if (primary) {
+            speed = body.getOrbitalSpeed(primary);
+        } else {
+            speed = body.getOrbitalSpeed(sun);
+        }
+        speed = +speed.toFixed(2);
+
+        const $speed = $(`<p class="info-box-small"><b>Orbital speed:</b> <em id="orbital-speed" class="right-float">${speed} km/s</em></p>`);
+        $infoBox.append($speed);
+    }
 }
 
 // function to find average radius of a given body
