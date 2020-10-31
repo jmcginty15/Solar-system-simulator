@@ -302,22 +302,28 @@ button {
 #control-info {
     position: fixed;
     top: 0px;
-    left: 23%;
+    right: 18%;
     height: fit-content;
     width: fit-content;
     font-size: smaller;
-    color: white;
-    background-color: black;
-    opacity: 0.35;
-    border-color: white;
-    border-style: outset;
-    border-radius: 15px;
-    z-index: 10;
-    margin: 10px;
     padding: 5px;
     object-fit: cover;
-    transition: opacity 250ms;
-    display: inline-block;
+}
+
+#show-hide-overlay {
+    position: fixed;
+    top: 0px;
+    left: 23%;
+    height: fit-content;
+    width: fit-content;
+    font-size: smaller;    
+    padding: 5px;
+    object-fit: cover;
+}
+
+#show-hide-button:hover {
+    cursor: pointer;
+    text-decoration: underline;
 }
 
 #framerate-container {

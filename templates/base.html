@@ -11,7 +11,7 @@
 <body>
     <div id="viewport"></div>
     <div id="overlay">
-        <div id="left-controls" class="control-box">
+        <div id="left-controls" class="control-box overlay">
             <form id="sim-select" action="/">
                 <h4 class="menu-title">Object set: <span id="info-icon" class="right-float">&#128712</span></h4>
                 <select id="object-set" name="object-set" size="5" required>
@@ -52,14 +52,17 @@
                 <h3>No object selected</h3>
             </div>
         </div>
-        <div id="right-controls" class="control-box">
+        <div id="right-controls" class="control-box overlay">
             <h3 class="menu-title">Objects</h3>
             <h6 class="menu-title" id="menu-info">Click an object to view:</h6>
             <div id="object-select"></div>
             <h6 class="menu-title" id="menu-info">Grayed-out name indicates the object's location and velocity data were
                 not available for the selected date</h6>
         </div>
-        <div id="control-info" class="control-box">
+        <div id="show-hide-overlay" class="control-box">
+            <p><b id="show-hide-button">Hide overlay</b></p>
+        </div>
+        <div id="control-info" class="control-box overlay">
             <p><b>Click & drag to look around</b></p>
             <p><b>Use mouse wheel to zoom</b></p>
             <p>Framerate: <b><em id="framerate-container" class="right-float"></em></b></p>

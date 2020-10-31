@@ -3,10 +3,32 @@ import { OrbitControls } from './node_modules/three/examples/jsm/controls/OrbitC
 import { Mesh, Vector3 } from './node_modules/three/src/Three.js';
 
 $(async function () {
+    // useful jquery objects
+    const $elapsedTime = $('#elapsed-time');
+    const $currentTime = $('#current-time');
+    const $framerateContainer = $('#framerate-container');
+    const $playPauseButton = $('#play-pause');
+    const $simSelectForm = $('#sim-select');
+    const $objectInfo = $('#object-info');
+    const $dateSelect = $('#date');
+    const $timeSelect = $('#time');
+    const $objectSetSelect = $('#object-set');
+    const $speedSlider = $('#speed-slider');
+    const $appInfo = $('#app-info');
+    const $infoIcon = $('#info-icon');
+    const $objectSelect = $('#object-select');
+    const $closeButton = $('#close-button');
+    const $closeButton2 = $('#close-button-2');
+    const $developmentInfo = $('#development-info');
+    const $aboutLink = $('#about-link');
+    const $showHideButton = $('#show-hide-button');
+    const $overlayClass = $('.overlay');
+    const $showHideOverlay = $('#show-hide-overlay');
+    const $loadingScreen = $('#loading-screen');
+
     const BASE_URL = 'http://127.0.0.1:5000';
-    // const BODY_SETS = loadBodySets();
-    // console.log(BODY_SETS);
     let running = false;
+    let overlayHidden = false;
     let startDate = new Date();
     let currentDate = new Date();
     let frameCountStart = new Date();
@@ -102,8 +124,8 @@ $(async function () {
 
         elapsedTime = currentDate - startDate;
         timeString = parseTime(elapsedTime);
-        $('#elapsed-time').text(timeString);
-        $('#current-time').text(parseDateTime(currentDate));
+        $elapsedTime.text(timeString);
+        $currentTime.text(parseDateTime(currentDate));
         orbitControls.update();
 
         if (cameraTarget) {
@@ -125,14 +147,14 @@ $(async function () {
         if (frameCountCurrent - frameCountStart >= 1000) {
             let fps = frameCount / ((frameCountCurrent - frameCountStart) / 1000);
             if (fps >= 45) {
-                $('#framerate-container').css('color', 'green');
+                $framerateContainer.css('color', 'green');
             } else if (fps >= 30) {
-                $('#framerate-container').css('color', 'yellow');
+                $framerateContainer.css('color', 'yellow');
             } else {
-                $('#framerate-container').css('color', 'red');
+                $framerateContainer.css('color', 'red');
             }
             fps = fps.toFixed(2);
-            $('#framerate-container').text(`${fps} fps`);
+            $framerateContainer.text(`${fps} fps`);
             frameCountStart = new Date();
             frameCount = 0;
         } else {
@@ -358,12 +380,12 @@ $(async function () {
     }
 
     // event listener for play-pause button
-    $('#play-pause').on('click', function () {
+    $playPauseButton.on('click', function () {
         if (running) {
             running = false;
-            $('#play-pause').html('&#9205');
+            $playPauseButton.html('&#9205');
         } else {
-            $('#play-pause').html('&#9208');
+            $playPauseButton.html('&#9208');
             running = true;
             tstart = true;
         }
@@ -377,16 +399,16 @@ $(async function () {
     });
 
     // event listener for form submission
-    $('#sim-select').on('submit', async function (evt) {
+    $simSelectForm.on('submit', async function (evt) {
         evt.preventDefault();
         evt.stopPropagation();
         running = false;
-        $('#play-pause').html('&#9205');
-        $('#object-info').html('<h4>No object selected</h4>');
+        $playPauseButton.html('&#9205');
+        $objectInfo.html('<h4>No object selected</h4>');
 
-        const date = $('#date').val();
-        const time = $('#time').val();
-        const bodySet = $('#object-set').val();
+        const date = $dateSelect.val();
+        const time = $timeSelect.val();
+        const bodySet = $objectSetSelect.val();
 
         startDate = new Date(`${date}T${time}`);
         currentDate = new Date(`${date}T${time}`);
@@ -397,12 +419,12 @@ $(async function () {
     });
 
     // event listener for range slider change
-    $('#speed-slider').on('change', function () {
-        simSpeed = parseInt($('#speed-slider').val());
+    $speedSlider.on('change', function () {
+        simSpeed = parseInt($speedSlider.val());
     });
 
     // event listener for expanding and collapsing system selection lists and viewing objects
-    $('#object-select').on('click', function (evt) {
+    $objectSelect.on('click', function (evt) {
         const $target = $(evt.target);
 
         if ($target.hasClass('object-selector')) {
@@ -440,25 +462,40 @@ $(async function () {
     });
 
     // event listener for info icon
-    $('#info-icon').on('click', function () {
-        $('#app-info').show();
+    $infoIcon.on('click', function () {
+        $appInfo.show();
     });
 
     // event listener for closing app-info
-    $('#close-button').on('click', function () {
-        $('#app-info').hide();
+    $closeButton.on('click', function () {
+        $appInfo.hide();
     });
 
     // event listener for development info button
-    $('#about-link').on('click', function () {
-        $('#app-info').hide();
-        $('#development-info').show();
+    $aboutLink.on('click', function () {
+        $appInfo.hide();
+        $developmentInfo.show();
     });
 
     // event listener for closing development-info
-    $('#close-button-2').on('click', function () {
-        $('#development-info').hide();
+    $closeButton2.on('click', function () {
+        $developmentInfo.hide();
     });
+
+    // event listener for showing or hiding overlay
+    $showHideButton.on('click', function () {
+        if (overlayHidden) {
+            $overlayClass.show();
+            $showHideOverlay.css({left: '23%'});
+            $showHideButton.text('Hide overlay');
+            overlayHidden = false;
+        } else {
+            $overlayClass.hide();
+            $showHideOverlay.css({left: '0%'});
+            $showHideButton.text('Show overlay');
+            overlayHidden = true;
+        }
+    })
 
     // function to clear all objects from scene
     function clearScene() {
@@ -486,7 +523,7 @@ $(async function () {
 
     // function to load new scene
     async function loadScene(datetime, bodySet) {
-        $('#loading-screen').show();
+        $loadingScreen.show();
 
         const year = datetime.getUTCFullYear();
         const month = datetime.getUTCMonth() + 1;
