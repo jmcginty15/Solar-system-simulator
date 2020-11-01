@@ -11,29 +11,41 @@ def get_obj_vectors(id, center, datetime):
     relative to the specified coordinate center.
     Then get object mass and name data from SQL database to combine into a single object."""
     julian = to_jd(datetime, fmt='jd')
+
+    # these four objects must be queried from the small body database, which is separate from the major body database
+    # major body database contains the Sun, all planets and their moons, and Pluto and its moons
+    # small body database contains objects such as comets, asteroids, and these four dwarf planets
     if id in [1, 136108, 136199, 136472]:
         id_type = 'smallbody'
     else:
         id_type = 'id'
 
+    # if position and velocity data are not available for the given object at the given date and time,
+    # the nasa_obj.vectors() will raise an exception
+    # if this happens, we will set the object's available property to false
     try:
-        nasa_obj = Horizons(id=id, location=f'500@{center}', epochs=julian, id_type=id_type)
+        nasa_obj = Horizons(
+            id=id, location=f'500@{center}', epochs=julian, id_type=id_type)
         vec_table = nasa_obj.vectors()
-        pos = [au_to_km(vec_table['x'][0]), au_to_km(vec_table['y'][0]), au_to_km(vec_table['z'][0])]
-        vel = [au_to_km(vec_table['vx'][0], vel=True), au_to_km(vec_table['vy'][0], vel=True), au_to_km(vec_table['vz'][0], vel=True)]
+        pos = [au_to_km(vec_table['x'][0]), au_to_km(
+            vec_table['y'][0]), au_to_km(vec_table['z'][0])]
+        vel = [au_to_km(vec_table['vx'][0], vel=True), au_to_km(
+            vec_table['vy'][0], vel=True), au_to_km(vec_table['vz'][0], vel=True)]
     except:
         nasa_obj = None
 
+    # after the call is made to JPL Horizons,
+    # query our local SQL database for all information needed to construct the object's model
     database_obj = Object.query.get_or_404(id)
     size = [database_obj.radius_x, database_obj.radius_y, database_obj.radius_z]
 
+    # see the Body class in the classes.js file for more information on these properties
     final_obj = {'id': id,
                  'available': False,
                  'name': database_obj.name,
                  'designation': database_obj.designation,
                  'obj_type': database_obj.obj_type,
                  'sat_type': database_obj.sat_type,
-                 #  'alt_names': database_obj.alt_names,
                  'mass': database_obj.mass,
                  'dimensions': size,
                  'rotation_period': database_obj.rotation_period,
@@ -52,9 +64,11 @@ def get_obj_vectors(id, center, datetime):
                  'ring_transparency': database_obj.ring_transparency,
                  'bump_scale': database_obj.bump_scale}
 
+    # if the nasa_obj.vectors() call raised an exception, the value of nasa_obj will be None
     if nasa_obj:
         final_obj['position'] = pos
         final_obj['velocity'] = vel
+        # available is set to True if we have valid position and velocity data
         final_obj['available'] = True
 
     return final_obj
@@ -76,6 +90,7 @@ def get_obj_batch(obj_ids, center, datetime):
 
 
 def get_id_list(object_set):
+    """Constructs a preselected list of object ids for a given object set"""
     mars_moons = [401, 402]
     jupiter_moons = [i for i in range(501, 573)]
     for i in range(55501, 55508):
@@ -89,7 +104,7 @@ def get_id_list(object_set):
     neptune_moons = [i for i in range(801, 815)]
     pluto_moons = [i for i in range(901, 906)]
 
-    if object_set == 'full':
+    if object_set == 'full':                # full solar system
         id_list = [10, 199, 299, 399, 301, 499, 1]
         for moon_id in mars_moons:
             id_list.append(moon_id)
@@ -111,9 +126,9 @@ def get_id_list(object_set):
         id_list.append(136108)
         id_list.append(136199)
         id_list.append(136472)
-    elif object_set == 'inner':
+    elif object_set == 'inner':             # inner solar system
         id_list = [10, 199, 299, 399, 301, 499, 401, 402, 1]
-    elif object_set == 'outer':
+    elif object_set == 'outer':             # outer solar system
         id_list = [10, 599]
         for moon_id in jupiter_moons:
             id_list.append(moon_id)
@@ -132,120 +147,35 @@ def get_id_list(object_set):
         id_list.append(136108)
         id_list.append(136199)
         id_list.append(136472)
-    elif object_set == 'planets':
+    elif object_set == 'planets':           # planets only
         id_list = [10, 199, 299, 399, 499, 599, 699, 799, 899]
-    elif object_set == 'dwarves':
+    elif object_set == 'dwarves':           # dwarf planets only
         id_list = [10, 1, 999, 136108, 136199, 136472]
-    elif object_set == 'planets-dwarves':
-        id_list = [10, 199, 299, 399, 499, 1, 599, 699, 799, 899, 999, 136108, 136199, 136472]
-    elif object_set == '3':
+    elif object_set == 'planets-dwarves':   # planets and dwarf planets
+        id_list = [10, 199, 299, 399, 499, 1, 599,
+                   699, 799, 899, 999, 136108, 136199, 136472]
+    elif object_set == '3':                 # earth-moon system
         id_list = [10, 399, 301]
-    elif object_set == '4':
+    elif object_set == '4':                 # martian system
         id_list = [10, 499, 401, 402]
-    elif object_set == '5':
+    elif object_set == '5':                 # jovian system
         id_list = [10, 599]
         for moon_id in jupiter_moons:
             id_list.append(moon_id)
-    elif object_set == '6':
+    elif object_set == '6':                 # saturnian system
         id_list = [10, 699]
         for moon_id in saturn_moons:
             id_list.append(moon_id)
-    elif object_set == '7':
+    elif object_set == '7':                 # uranian system
         id_list = [10, 799]
         for moon_id in uranus_moons:
             id_list.append(moon_id)
-    elif object_set == '8':
+    elif object_set == '8':                 # neptunian system
         id_list = [10, 899]
         for moon_id in neptune_moons:
             id_list.append(moon_id)
-    elif object_set == '9':
+    elif object_set == '9':                 # plutonian system
         id_list = [10, 999]
         for moon_id in pluto_moons:
             id_list.append(moon_id)
     return id_list
-
-
-def test_barycenter_func():
-    """Function to set up a test for barycenter method"""
-    date = datetime.datetime(2017, 10, 1, 21, 18)
-    pluto_sys = System.query.get(9)
-    ids = [obj.id for obj in pluto_sys.objects]
-    return get_obj_batch(ids, 0, date)
-
-
-def cross_product(v1, v2):
-    x1 = v1[0]
-    y1 = v1[1]
-    z1 = v1[2]
-
-    x2 = v2[0]
-    y2 = v2[1]
-    z2 = v2[2]
-
-    x3 = y1*z2 - z1*y2
-    y3 = z1*x2 - x1*z2
-    z3 = x1*y2 - y1*x2
-
-    return [x3, y3, z3]
-
-
-def dot_product(v1, v2):
-    x1 = v1[0]
-    y1 = v1[1]
-    z1 = v1[2]
-
-    x2 = v2[0]
-    y2 = v2[1]
-    z2 = v2[2]
-
-    return x1 * x2 + y1 * y2 + z1 * z2
-
-
-def vectors_to_ellipse(r_vec, v_vec, m1, m2):
-    G = 6.67408e-20
-    mu = G*(m1 + m2)
-
-    x = r_vec[0]
-    y = r_vec[1]
-    z = r_vec[2]
-
-    vx = v_vec[0]
-    vy = v_vec[1]
-    vz = v_vec[2]
-
-    h_vec = cross_product(r_vec, v_vec)
-
-    hx = h_vec[0]
-    hy = h_vec[1]
-    hz = h_vec[2]
-
-    r = (x**2 + y**2 + z**2)**(1 / 2)
-    v = (vx**2 + vy**2 + vz**2)**(1 / 2)
-    h = (hx**2 + hy**2 + hz**2)**(1 / 2)
-
-    E = (v**2 / 2) - (mu / r)
-
-    # semimajor axis
-    a = -(mu / (2 * E))
-    # eccentricity
-    e = (1 - (h**2/(a*mu)))**(1 / 2)
-    # inclination
-    i = numpy.arccos(hz / h)
-
-    while i > math.pi:
-        i -= 2 * math.pi
-    while i < 0:
-        i += 2 * math.pi
-
-    # longitude of ascending node
-    Omega = math.atan2(hx, -hy)
-
-    u = math.atan2(z / math.sin(i), x * math.cos(Omega) + y * math.sin(Omega))
-
-    p = a * (1 - e**2)
-    nu = math.atan2((p / mu)**(1 / 2) * dot_product(v_vec,
-                                                    r_vec), p - r)       # true anomaly
-    # argument of periapsis
-    omega = u - nu
-
-    return [e, a, math.degrees(i), math.degrees(Omega), math.degrees(omega), math.degrees(nu)]

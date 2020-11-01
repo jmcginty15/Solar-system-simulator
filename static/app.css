@@ -70,7 +70,7 @@ body {
     border-radius: 15px;
     z-index: 12;
     padding: 10px;
-    /* display: none; */
+    display: none;
 }
 
 #progress-bar {
@@ -329,21 +329,3 @@ button {
 #framerate-container {
     color: green;
 }
-
-/* #speed-slider {
-    background-color: red;
-    background: red; 
-    border-color: red;
-    color: red;
-} */
-
-/* input[type=range] {
-    -webkit-appearance: none;
-    margin: 2;
-    width: 10;
-    background-color: red;
-  
-    /* &:focus {
-      outline: none;
-    } */
-/* } */

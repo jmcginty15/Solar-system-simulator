@@ -15,12 +15,17 @@ debug = DebugToolbarExtension(app)
 connect_db(app)
 db.create_all()
 
+
 @app.route('/')
 def home():
+    """Renders the base template for the page"""
     return render_template('base.html')
+
 
 @app.route('/bodies/<int:obj_id>')
 def get_object(obj_id):
+    """Accepts a date in the query string and a single object id
+    Calls get_obj_vectors and returns the output as a JSON object"""
     year = int(request.args['year'])
     month = int(request.args['month'])
     day = int(request.args['day'])
@@ -31,8 +36,12 @@ def get_object(obj_id):
     date_time = datetime.datetime(year, month, day, hour, minute, second)
     return jsonify(get_obj_vectors(obj_id, 0, date_time))
 
+
 @app.route('/bodies')
 def get_bodies():
+    """Accepts a date and object set in the query string
+    Calls get_id_list to construct a list of ids to query
+    Then calls get_obj_batch and returns the output as a JSON object"""
     object_set = request.args['object_set']
     ids = get_id_list(object_set)
 
@@ -46,25 +55,8 @@ def get_bodies():
     date_time = datetime.datetime(year, month, day, hour, minute, second)
     return jsonify(get_obj_batch(ids, 0, date_time))
 
-@app.route('/objects/<int:sys_id>')
-def get_objects(sys_id):
-    date = datetime.datetime(2000, 12, 22, 1, 41)
-    sys = System.query.get(sys_id)
-    ids = [obj.id for obj in sys.objects]
-    return jsonify(get_obj_batch(ids, 0, date))
 
 @app.route('/images/<path:img_path>')
 def get_image(img_path):
     """Returns the image file located at the given path"""
     return send_file(f'images/{img_path}')
-
-@app.route('/barnes-hut-test')
-def test():
-    return render_template('barnes-hut-test.html')
-
-@app.route('/test')
-def test2():
-    date = datetime.datetime(2000, 1, 1, 0, 0)
-    # ids = [10, 299]
-    ids = [10, 999, 901, 902, 903, 904, 905]
-    return jsonify(get_obj_batch(ids, 0, date))

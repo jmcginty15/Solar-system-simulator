@@ -1,3 +1,6 @@
+// this class is used to run the Barnes-Hut approximation algorithm
+// this algorithm reduces the number of calculations needed to update force, acceleration, velocity, and position vectors
+
 const G = 6.67408e-20 // universal gravitational constant, km3/(kg*s2)
 
 class Tree {
@@ -80,11 +83,10 @@ class Tree {
         }
 
         if (this.isExternalNode || theta < thetaThreshold) {
-            // if node is an external node or theta is under the threshold value,
-            // treat node as a single body
+            // if node is an external node or theta is under the threshold value, treat node as a single body
             const m1 = this.totalMass;
             const m2 = body.mass;
-            const F = (G * m1 * m2) / r ** 2;                         // magnitude of gravitational force in kN
+            const F = (G * m1 * m2) / r ** 2;                       // magnitude of gravitational force in kN
 
             const xy = Math.sqrt(rVec[0] ** 2 + rVec[1] ** 2);
             const theta = Math.atan2(rVec[1], rVec[0]);             // angle between x-axis and node center of mass, in x-y plane, as seen from body
@@ -104,9 +106,9 @@ class Tree {
             for (let octant in childNodes) {
                 if (childNodes[octant]) {
                     const nextForce = childNodes[octant].getForceVector(body, thetaThreshold);
-                    for (let i = 0; i < 3; i++) {
-                        totalForce[i] += nextForce[i];
-                    }
+                    totalForce[0] += nextForce[0];
+                    totalForce[1] += nextForce[1];
+                    totalForce[2] += nextForce[2];
                 }
             }
 
@@ -182,88 +184,4 @@ class Tree {
             sideLength: newOctantSideLength
         }
     }
-}
-
-// const bodies = [];
-
-// for (let i = 0; i < 10; i++) {
-//     let x = 20 * Math.random() - 10;
-//     let y = 20 * Math.random() - 10;
-//     let z = 20 * Math.random() - 10;
-//     let m = 100 * Math.random();
-//     let body = new Body({
-//         id: i,
-//         position: [x, y, z],
-//         mass: m
-//     });
-//     bodies.push(body);
-// }
-
-// const tree = new Tree([-10, -10, -10], 20);
-// for (let body of bodies) {
-//     tree.addBody(body);
-// }
-// targetBody = bodies[0];
-// testBodies = bodies.slice(1);
-
-function totalForce(target, bodies) {
-    const total = [0, 0, 0];
-
-    for (let body of bodies) {
-        const rVec = [body.position[0] - target.position[0], body.position[1] - target.position[1], body.position[2] - target.position[2]];
-        const r = Math.sqrt(rVec[0]**2 + rVec[1]**2 + rVec[2]**2);
-        const F = (G * body.mass * target.mass) / r**2;
-
-        const xy = Math.sqrt(rVec[0]**2 + rVec[1]**2);
-        const theta = Math.atan2(rVec[1], rVec[0]);
-        const phi = Math.atan2(rVec[2], xy);
-
-        const Fxy = F * Math.cos(phi);
-        const Fx = Fxy * Math.cos(theta);
-        const Fy = Fxy * Math.sin(theta);
-        const Fz = F * Math.sin(phi);
-
-        const Fvec = [Fx, Fy, Fz];
-
-        for (let i = 0; i < 3; i++) {
-            total[i] += Fvec[i];
-        }
-    }
-
-    return total;
-}
-
-function timeTrial(bodies, tree, approx, threshold) {
-    let force = [];
-    let start = null;
-    let end = null;
-
-    if (approx) {
-        start = new Date();
-        calcAllApprox(bodies, tree, threshold);
-        end = new Date();
-    } else {
-        start = new Date();
-        calcAllExact(bodies);
-        end = new Date();
-    }
-
-    return end - start;
-}
-
-function calcAllExact(bodies) {
-    for (let i = 0; i < bodies.length; i++) {
-        const a1 = bodies.slice(0, i);
-        const a2 = bodies.slice(i + 1);
-        const otherBodies = a1.concat(a2);
-        const force = totalForce(bodies[i], otherBodies);
-    }
-    return 'done';
-}
-
-function calcAllApprox(bodies, tree, threshold) {
-    for (let body of bodies) {
-        const force = tree.getForceVector(body, threshold);
-    }
-    return 'done';
 }

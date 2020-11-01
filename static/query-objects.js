@@ -1,4 +1,6 @@
-// function loadBodySets() {
+// these objects will be used to display information on the loading screen while querying information
+// from the SQL database and from JPL Horizons
+
 const SUN = { id: 10, name: 'Sun', sysName: null };
 const MERCURY = { id: 199, name: 'Mercury', sysName: null };
 const VENUS = { id: 299, name: 'Venus', sysName: null };

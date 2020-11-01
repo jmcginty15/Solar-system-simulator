@@ -1,3 +1,5 @@
+// helper functions to be used in app.js
+
 // function to reset time display
 function resetTimer(datetime) {
     const dateString = parseDateTime(datetime);
@@ -46,11 +48,11 @@ function parseTime(time) {
 
 // function to convert datetime object to displayable string
 function parseDateTime(datetime) {
-    let month = datetime.getUTCMonth() + 1;
-    let day = datetime.getUTCDate();
-    const year = datetime.getUTCFullYear();
-    let hour = datetime.getUTCHours();
-    let minute = datetime.getUTCMinutes();
+    let month = datetime.getMonth() + 1;
+    let day = datetime.getDate();
+    const year = datetime.getFullYear();
+    let hour = datetime.getHours();
+    let minute = datetime.getMinutes();
 
     if (day.toString().length < 2) {
         day = '0' + day.toString();
@@ -162,6 +164,43 @@ function updateSystemInfo(system, sun) {
         $infoBox.append(`<p class="info-box-small"><b>Known moons:</b> <em class="right-float">${system.bodies.length - 1}</em></p>`);
     }
 
+    let mass = system.mass;
+    let massLabel = '';
+    if (mass < 1e+6) {
+        mass = mass;
+        massLabel = massLabel;
+    } else if (mass < 1e+9) {
+        mass /= 1e+6;
+        massLabel = ' million';
+    } else if (mass < 1e+12) {
+        mass /= 1e+9;
+        massLabel = ' billion';
+    } else if (mass < 1e+15) {
+        mass /= 1e+12;
+        massLabel = ' trillion';
+    } else if (mass < 1e+18) {
+        mass /= 1e+15;
+        massLabel = ' quadrillion';
+    } else if (mass < 1e+21) {
+        mass /= 1e+18;
+        massLabel = ' quintillion';
+    } else if (mass < 1e+24) {
+        mass /= 1e+21;
+        massLabel = ' sextillion';
+    } else if (mass < 1e+27) {
+        mass /= 1e+24;
+        massLabel = ' septillion';
+    } else if (mass < 1e+30) {
+        mass /= 1e+27;
+        massLabel = ' octillion';
+    } else if (mass < 1e+33) {
+        mass /= 1e+30;
+        massLabel = ' nonillion';
+    }
+    mass = +mass.toFixed(2);
+
+    $infoBox.append(`<p class="info-box-small"><b>Total mass:</b> <em class="right-float">${mass + massLabel} kg</em></p>`);
+
     let radius = system.radius;
     let radiusLabel = '';
     if (radius < 1e+6) {
@@ -193,10 +232,10 @@ function updateSystemInfo(system, sun) {
             sunDistanceLabel = ' billion';
         }
         sunDistance = +sunDistance.toFixed(2);
-        
+
         const $sunDistance = $(`<p class="info-box-small"><b>Distance to Sun:</b> <em id="sun-distance" class="right-float">${sunDistance + sunDistanceLabel} km</em></p>`);
         $infoBox.append($sunDistance);
-    
+
         let speed = system.getOrbitalSpeed(sun);
         speed = +speed.toFixed(2);
         const $speed = $(`<p class="info-box-small"><b>Orbital speed:</b> <em id="orbital-speed" class="right-float">${speed} km/s</em></p>`);
@@ -293,7 +332,7 @@ function updateObjectInfo(body, sun, primary) {
             sunDistanceLabel = ' billion';
         }
         sunDistance = +sunDistance.toFixed(2);
-        
+
         const $sunDistance = $(`<p class="info-box-small"><b>Distance to Sun:</b> <em id="sun-distance" class="right-float">${sunDistance + sunDistanceLabel} km</em></p>`);
         $infoBox.append($sunDistance);
 

@@ -40,7 +40,7 @@
                 <button type="submit" id="sim-select-submit">Go!</button>
             </form>
             <div id="sim-info">
-                <p><small class="right-float"><em>Times display in UTC</em></small></p>
+                <p><small class="right-float"><em>Times display in system's local time zone</em></small></p>
                 <p><b>Start date:</b><em id="start-time" class="right-float"></em></p>
                 <p><b>Current date:</b><em id="current-time" class="right-float"></em></p>
                 <p><b>Elapsed time:</b><em id="elapsed-time" class="right-float"></em></p>
@@ -87,11 +87,13 @@
                 using their real positions at the specified date and time. The app includes 223 possible objects to
                 simulate, including the Sun, 8 planets, 5 dwarf planets, and 209 total moons.</p>
             <p class="info-paragraph">From there, click the play/pause button to run or pause the simulation. The app
-                calculates realistic gravitational interactions between all selected objects using Newton's Law of
-                Universal Gravitation and uses these calculations to animate the objects on-screen. The speed of the
-                simulation can be adjusted using the slider. The slider's full left position corresponds to
-                approximately real-time movements, depending on the framerate of the animation. At any time, you can
-                click an object or system in the right-side menu to get a view of that object or system.</p>
+                calculates realistic gravitational interactions between all selected objects using <a
+                    href="https://en.wikipedia.org/wiki/Newton%27s_law_of_universal_gravitation"
+                    target="_blank">Newton's Law of Universal Gravitation</a> and uses these calculations to animate the
+                objects on-screen. The speed of the simulation can be adjusted using the slider. The slider's full left
+                position corresponds to approximately real-time movements, depending on the framerate of the animation.
+                At any time, you can click an object or system in the right-side menu to get a view of that object or
+                system.</p>
             <p class="info-paragraph">Many of the solar system's smaller moons and dwarf planets are irregularly shaped,
                 but they are represented as ellipsoids in this simulation for the sake of simplicity. Additionally,
                 texture maps are only available for the Sun, planets, and some of the larger moons. Objects without
@@ -137,10 +139,10 @@
         integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/axios/dist/axios.js"></script>
     <script src="/static/query-objects.js"></script>
-    <script src="/static/classes.js"></script>
     <script src="/static/functions.js"></script>
+    <script src="/static/classes.js"></script>
     <script src="/static/barnes-hut.js"></script>
-    <script src="/static/app.js" type="module" defer></script>
+    <script src="/static/app.js" type="module"></script>
 </body>
 
 </html>

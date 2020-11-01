@@ -1,38 +1,39 @@
 class Body {
+    // class to represent a star, planet, dwarf planet, or moon
     constructor(obj) {
-        this.designation = obj.designation;
-        this.dimensions = obj.dimensions;
-        this.rotation_period = obj.rotation_period;
-        this.x_rotation = Math.random() / 1000;
-        this.y_rotation = Math.random() / 1000;
-        this.z_rotation = Math.random() / 1000;
-        this.id = obj.id;
-        this.available = obj.available;
-        this.mass = obj.mass;
-        this.name = obj.name;
-        this.obj_type = obj.obj_type;
-        this.sat_type = obj.sat_type;
-        this.acceleration = [0, 0, 0];
-        this.force = [0, 0, 0];
-        this.solstice_angle = obj.solstice_angle;
-        this.axial_tilt = obj.axial_tilt;
-        this.inclination = obj.inclination;
-        this.long_asc = obj.long_asc;
-        this.ring_inner_radius = obj.ring_inner_radius;
-        this.ring_outer_radius = obj.ring_outer_radius;
-        this.color_map = obj.color_map;
-        this.bump_map = obj.bump_map;
-        this.specular_map = obj.specular_map;
-        this.cloud_map = obj.cloud_map;
-        this.cloud_transparency = obj.cloud_transparency;
-        this.ring_color = obj.ring_color;
-        this.ring_transparency = obj.ring_transparency;
-        this.bump_scale = obj.bump_scale
-        this.model = null;
+        this.designation = obj.designation;                 // object's IAU designation
+        this.dimensions = obj.dimensions;                   // 3D vector to determine ellipsoid shape
+        this.rotation_period = obj.rotation_period;         // used to determine speed of rotation
+        this.x_rotation = Math.random() / 1000;             // these random rotation values will be used to give the
+        this.y_rotation = Math.random() / 1000;             //  object some more interesting motion if the real rotation
+        this.z_rotation = Math.random() / 1000;             //  period was not available online
+        this.id = obj.id;                                   // unique integer id
+        this.available = obj.available;                     // boolean value, will be false if position and velocity data from JPL Horizons were not available for the selected date/time
+        this.mass = obj.mass;                               // object's mass
+        this.name = obj.name;                               // object's name
+        this.obj_type = obj.obj_type;                       // star, terrestrial planet, gas giant, ice giant, or dwarf planet
+        this.sat_type = obj.sat_type;                       // for moons of the gas and ice giants, indicates which group a moon belongs to
+        this.acceleration = [0, 0, 0];                      // 3D acceleration vector
+        this.force = [0, 0, 0];                             // 3D force vector
+        this.solstice_angle = obj.solstice_angle;           // angle of object's summer solstice, to determine direction of axial tilt
+        this.axial_tilt = obj.axial_tilt;                   // axial tilt, to be used in combination with inclination and long_asc
+        this.inclination = obj.inclination;                 // orbital inclination, to be used for determining tilt
+        this.long_asc = obj.long_asc;                       // longitude of ascending node, to be used for determining tilt
+        this.ring_inner_radius = obj.ring_inner_radius;     // inner radius of rings
+        this.ring_outer_radius = obj.ring_outer_radius;     // outer radius of rings
+        this.color_map = obj.color_map;                     // color map texture for object's surface
+        this.bump_map = obj.bump_map;                       // bump map texture for object's surface
+        this.bump_scale = obj.bump_scale;                   // scale factor for bump map
+        this.specular_map = obj.specular_map;               // specular map texture to determine object's reflectivity
+        this.cloud_map = obj.cloud_map;                     // color map texture for object's cloud layer
+        this.cloud_transparency = obj.cloud_transparency;   // alpha map texture for object's cloud layer
+        this.ring_color = obj.ring_color;                   // color map texture for rings
+        this.ring_transparency = obj.ring_transparency;     // alpha map texture for rings
+        this.model = null;                                  // property to associate a THREE.js object when it is created
 
         if (this.available) {
-            this.position = obj.position;
-            this.velocity = obj.velocity;
+            this.position = obj.position;                   // 3D position vector
+            this.velocity = obj.velocity;                   // 3D velocity vector
         }
     }
 
@@ -72,14 +73,15 @@ class Body {
     }
 
     updateModel(tStep) {
-        // updates the model's position in the scene
+        // updates the position and rotation of the object's THREE.js model in the scene
         this.model.position.set(this.position[0], this.position[1], this.position[2]);
         if (this.rotation_period) {
             // if the object has a rotation period in the database, rotate it on the z-axis
             const rotationSpeed = 2 * Math.PI / this.rotation_period;
             this.model.rotation.z += rotationSpeed * tStep;
         } else {
-            // if the object does not have a rotation period in the database, just make it tumble a little bit
+            // if the object does not have a rotation period in the database,
+            // use the object's randomly generated rotation increments
             this.model.rotation.x += this.x_rotation;
             this.model.rotation.y += this.y_rotation;
             this.model.rotation.z += this.z_rotation;
@@ -96,10 +98,10 @@ class Body {
         return Math.sqrt((this.velocity[0] - primary.velocity[0])**2 + (this.velocity[1] - primary.velocity[1])**2 + (this.velocity[2] - primary.velocity[2])**2);
     }
 
-    orbitalParams(orbiting) {
-        // calculates the object's orbital elements with reference to its primary body
+    getOrbitalParams(primary) {
+        // calculates the object's orbital elements with reference to another body
         const G = 6.67408e-20;
-        const mu = G * (orbiting.mass + this.mass);
+        const mu = G * (primary.mass + this.mass);
 
         const r_vec = this.position;
         const v_vec = this.velocity;
@@ -124,19 +126,19 @@ class Body {
 
         const E = (v ** 2 / 2) - (mu / r);
 
-        const a = -(mu / (2 * E));                                                      // semimajor axis
+        const a = -(mu / (2 * E));                                                          // semimajor axis
         const e = (1 - (h ** 2 / (a * mu))) ** (1 / 2);                                     // eccentricity
-        let i = Math.acos(hz / h);                                                    // inclination
+        let i = Math.acos(hz / h);                                                          // inclination
         i = adjustAngleRange(i, 0, Math.PI);
 
-        let Omega = Math.atan2(hx, -hy);                                              // longitude of ascending node
+        let Omega = Math.atan2(hx, -hy);                                                    // longitude of ascending node
         Omega = adjustAngleRange(Omega, 0, 2 * Math.PI);
 
         const u = Math.atan2(z / Math.sin(i), x * Math.cos(Omega) + y * Math.cos(Omega));
         const p = a * (1 - e ** 2);
 
-        let nu = Math.atan2((p / mu) ** (1 / 2) * dotProduct(v_vec, r_vec), p - r);     // true anomaly
-        let w = u - nu;                                                               // argument of periapse
+        let nu = Math.atan2((p / mu) ** (1 / 2) * dotProduct(v_vec, r_vec), p - r);         // true anomaly
+        let w = u - nu;                                                                     // argument of periapse
         nu = adjustAngleRange(nu, 0, 2 * Math.PI);
         w = adjustAngleRange(w, 0, 2 * Math.PI);
 
@@ -152,17 +154,23 @@ class Body {
 }
 
 class System {
+    // class to represent a planetary system, or the whole solar system
     constructor(id, bodyList) {
-        this.id = id;
-        this.bodies = bodyList;
-        this.primary = this.bodies[0];
-        this.position = [0, 0, 0];
-        this.velocity = [0, 0, 0];
+        this.id = id;                       // unique integer id
+        this.bodies = bodyList;             // array of all bodies in the system
+        this.primary = this.bodies[0];      // system's primary body, will always be the sun or a planet or dwarf planet
+        this.position = [0, 0, 0];          // 3D position vector of the system's barycenter
+        this.velocity = [0, 0, 0];          // 3D velocity vector of the system's barycenter
+        this.mass = 0;
 
-        if (id === 0) {
+        for (let body of this.bodies) {
+            this.mass += body.mass;         // total mass of the system
+        }
+
+        if (id === 0) {                     // assign name and radius according to id
             this.name = 'Solar';
-            this.radius = 1.457936e+10;
-        } else if (id === 3) {
+            this.radius = 1.457936e+10;     // radius is the apoapsis distance of the furthest-out object from the
+        } else if (id === 3) {              // center of the system
             this.name = 'Earth-Moon';
             this.radius = 405400;
         } else if (id === 4) {
@@ -187,39 +195,35 @@ class System {
     }
 
     updatePosition() {
-        // updates the system barycenter according to the bodies it contains
-        let totalMass = 0;
+        // sets or updates the position vector of the system barycenter
         const posMass = [0, 0, 0];
         for (let body of this.bodies) {
             if (body.available) {
-                totalMass += body.mass;
                 posMass[0] += body.position[0] * body.mass;
                 posMass[1] += body.position[1] * body.mass;
                 posMass[2] += body.position[2] * body.mass;
             }
         }
-        posMass[0] /= totalMass;
-        posMass[1] /= totalMass;
-        posMass[2] /= totalMass;
+        posMass[0] /= this.mass;
+        posMass[1] /= this.mass;
+        posMass[2] /= this.mass;
         this.position = posMass;
         return posMass;
     }
 
     updateVelocity() {
-        // updates the system barycenter's velocity according to the bodies it contains
-        let totalMass = 0;
+        // sets or updates the velocity vector of the system barycenter
         const velMass = [0, 0, 0];
         for (let body of this.bodies) {
             if (body.available) {
-                totalMass += body.mass;
                 velMass[0] += body.velocity[0] * body.mass;
                 velMass[1] += body.velocity[1] * body.mass;
                 velMass[2] += body.velocity[2] * body.mass;
             }
         }
-        velMass[0] /= totalMass;
-        velMass[1] /= totalMass;
-        velMass[2] /= totalMass;
+        velMass[0] /= this.mass;
+        velMass[1] /= this.mass;
+        velMass[2] /= this.mass;
         this.velocity = velMass;
         return velMass;
     }
@@ -236,14 +240,17 @@ class System {
 }
 
 function crossProduct(v1, v2) {
+    // calculates the cross product of two vectors
     return [v1[1] * v2[2] - v1[2] * v2[1], v1[2] * v2[0] - v1[0] * v2[2], v1[0] * v2[1] - v1[1] * v2[0]];
 }
 
 function dotProduct(v1, v2) {
+    // calculates the dot product of two vectors
     return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
 }
 
 function adjustAngleRange(angle, min, max) {
+    // adjusts an angle to within the given range, such as 0 to 2pi or -pi to pi
     while (angle < min) {
         angle += 2 * Math.PI;
     }
@@ -252,70 +259,4 @@ function adjustAngleRange(angle, min, max) {
     }
 
     return angle;
-}
-
-function distance(obj1, obj2) {
-    // returns the distance between two objects
-    // units: km
-    const x = obj2.position[0] - obj1.position[0];
-    const y = obj2.position[1] - obj1.position[1];
-    const z = obj2.position[2] - obj1.position[2];
-    return Math.sqrt(x ** 2 + y ** 2 + z ** 2);
-}
-
-function forceMagnitude(obj1, obj2) {
-    // returns the magnitude of the gravitational force between two objects
-    // units: kN
-    return (G * obj1.mass * obj2.mass) / distance(obj1, obj2) ** 2;
-}
-
-function thetaDir(obj1, obj2) {
-    // returns the angle between the x-axis and obj2 as seen from obj1
-    // units: radians
-    const x = obj2.position[0] - obj1.position[0];
-    const y = obj2.position[1] - obj1.position[1];
-    return Math.atan2(y, x);
-}
-
-function phiDir(obj1, obj2) {
-    // returns the angle between the x-y plane and obj2 as seen from obj1
-    // units: radians
-    const x = obj2.position[0] - obj1.position[0];
-    const y = obj2.position[1] - obj1.position[1];
-    const xy = Math.sqrt(x ** 2 + y ** 2);
-    const z = obj2.position[2] - obj1.position[2];
-    return Math.atan2(z, xy);
-}
-
-function forceVector(obj1, obj2) {
-    // returns the three-dimensional force vector for obj2's gravity acting on obj1
-    // units: kN
-    const forceMag = forceMagnitude(obj1, obj2);
-    const theta = thetaDir(obj1, obj2);
-    const phi = phiDir(obj1, obj2);
-    const xy = forceMag * Math.cos(phi);
-    const x = xy * Math.cos(theta);
-    const y = xy * Math.sin(theta);
-    const z = forceMag * Math.sin(phi);
-    return [x, y, z];
-}
-
-function accVector(obj1, obj2) {
-    // returns the three-dimensional acceleration vector induced on obj1 by obj2's gravity
-    // units: km/s2
-    const force = forceVector(obj1, obj2);
-    const x = force[0] / obj1.mass;
-    const y = force[1] / obj1.mass;
-    const z = force[2] / obj1.mass;
-    return [x, y, z];
-}
-
-function reverseVector(vec) {
-    // returns the input vector pointing in the opposite direction
-    return [-vec[0], -vec[1], -vec[2]];
-}
-
-function buttDate(date, time) {
-    const datetime = new Date(`${date}T${time}`);
-    return datetime;
 }
