@@ -21,7 +21,7 @@ def get_obj_vectors(id, center, datetime):
         id_type = 'id'
 
     # if position and velocity data are not available for the given object at the given date and time,
-    # the nasa_obj.vectors() will raise an exception
+    # the nasa_obj.vectors() method will raise an exception
     # if this happens, we will set the object's available property to false
     try:
         nasa_obj = Horizons(
