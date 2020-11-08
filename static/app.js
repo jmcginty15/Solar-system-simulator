@@ -27,8 +27,8 @@ $(async function () {
     const $loadingScreen = $('#loading-screen');
 
     // initialize some values we will need later
-    const BASE_URL = 'http://127.0.0.1:5000';
-    // const BASE_URL = 'https://solar-system-simulator.herokuapp.com/';
+    // const BASE_URL = 'http://127.0.0.1:5000';
+    const BASE_URL = 'https://solar-system-simulator.herokuapp.com/';
     let running = false;
     let overlayHidden = false;
     let startDate = new Date();
