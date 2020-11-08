@@ -27,8 +27,8 @@ $(async function () {
     const $loadingScreen = $('#loading-screen');
 
     // initialize some values we will need later
-    // const BASE_URL = 'http://127.0.0.1:5000';
-    const BASE_URL = 'https://solar-system-simulator.herokuapp.com/';
+    const BASE_URL = 'http://127.0.0.1:5000';
+    // const BASE_URL = 'https://solar-system-simulator.herokuapp.com/';
     let running = false;
     let overlayHidden = false;
     let startDate = new Date();
@@ -48,6 +48,7 @@ $(async function () {
     camera.up = new THREE.Vector3(0, 0, 1);
     const renderer = new THREE.WebGLRenderer({ logarithmicDepthBuffer: true, physicallyCorrectLights: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    // renderer.shadowMap.enabled = true;
     viewport.appendChild(renderer.domElement);
 
     // instantiate orbitControls and attach it to the viewport
@@ -264,6 +265,8 @@ $(async function () {
         // create a new mesh from the geometry and material and add it to a new Object3D
         const object = new THREE.Object3D();
         const objectMesh = new THREE.Mesh(geometry, material);
+        objectMesh.castShadow = true;
+        objectMesh.receiveShadow = true;
         object.add(objectMesh);
 
         // for the Sun, add spotlights to illuminate the sun and a point light as the light source for the system
@@ -271,8 +274,9 @@ $(async function () {
             const sunLight = new THREE.PointLight(0xffffff, 1);
             sunLight.castShadow = true;
             object.add(sunLight);
-            object.castShadow = false;
-            object.receiveShadow = false;
+            console.log(sunLight);
+            objectMesh.castShadow = false;
+            objectMesh.receiveShadow = false;
             object.emissive = new THREE.Color(0xffffff);
             object.emissiveIntensity = 10;
 
@@ -294,9 +298,6 @@ $(async function () {
             object.add(spotLight4);
             object.add(spotLight5);
             object.add(spotLight6);
-        } else {
-            object.castShadow = true;
-            object.receiveShadow = true;
         }
 
         // if the body has rings, call the function to add them

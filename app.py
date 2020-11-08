@@ -1,11 +1,13 @@
 from flask import Flask, request, render_template, redirect, flash, jsonify, send_file
 from flask_debugtoolbar import DebugToolbarExtension
+from flask_cors import CORS
 from models import db, connect_db, System, Object, AltName
 from functions import get_obj_batch, get_obj_vectors, get_id_list
 import datetime
 import os
 
 app = Flask(__name__)
+CORS(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'yeet')
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql:///solar_system')
