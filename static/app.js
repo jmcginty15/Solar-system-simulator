@@ -28,7 +28,7 @@ $(async function () {
 
     // initialize some values we will need later
     // const BASE_URL = 'http://127.0.0.1:5000';
-    const BASE_URL = 'https://solar-system-simulator.herokuapp.com/';
+    const BASE_URL = 'https://solar-system-simulator.herokuapp.com';
     let running = false;
     let overlayHidden = false;
     let startDate = new Date();
@@ -428,7 +428,11 @@ $(async function () {
         if (body.ring_transparency) {
             ringMaterial.alphaMap = new THREE.TextureLoader().load(body.ring_transparency);
         } else {
-            ringMaterial.opacity = 0.5;
+            if (body.id === 136108) {
+                ringMaterial.opacity = 0.5;
+            } else {
+                ringMaterial.opacity = 0.15;
+            }
         }
         ringMaterial.transparent = true;
 
