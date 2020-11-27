@@ -1,6 +1,7 @@
 import * as THREE from './node_modules/three/src/Three.js';
 import { OrbitControls } from './node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { Mesh, Vector3 } from './node_modules/three/src/Three.js';
+import SYSTEMS from './query-objects.js';
 
 $(async function () {
     // useful JQuery objects
@@ -27,8 +28,8 @@ $(async function () {
     const $loadingScreen = $('#loading-screen');
 
     // initialize some values we will need later
-    // const BASE_URL = 'http://127.0.0.1:5000';
-    const BASE_URL = 'https://solar-system-simulator.herokuapp.com';
+    const BASE_URL = 'http://127.0.0.1:5000';
+    // const BASE_URL = 'https://solar-system-simulator.herokuapp.com';
     let running = false;
     let overlayHidden = false;
     let startDate = new Date();
@@ -629,43 +630,56 @@ $(async function () {
         let bodyList = null;
         let newCameraTarget = null;
         if (bodySet === 'full') {
-            bodyList = FULL;
+            bodyList = SYSTEMS[0];
+            // bodyList = FULL;
             newCameraTarget = 0;
         } else if (bodySet === 'inner') {
-            bodyList = INNER;
+            bodyList = SYSTEMS[1];
+            // bodyList = INNER;
             newCameraTarget = 0;
         } else if (bodySet === 'outer') {
-            bodyList = OUTER;
+            bodyList = SYSTEMS[2];
+            // bodyList = OUTER;
             newCameraTarget = 0;
         } else if (bodySet === 'planets') {
-            bodyList = PLANETS;
+            bodyList = SYSTEMS[3];
+            // bodyList = PLANETS;
             newCameraTarget = 0;
         } else if (bodySet === 'dwarves') {
-            bodyList = DWARVES;
+            bodyList = SYSTEMS[4];
+            // bodyList = DWARVES;
             newCameraTarget = 0;
         } else if (bodySet === 'planets-dwarves') {
-            bodyList = PLANETS_DWARVES;
+            bodyList = SYSTEMS[5];
+            // bodyList = PLANETS_DWARVES;
             newCameraTarget = 0;
         } else if (bodySet === '3') {
-            bodyList = EARTH_MOON_SYS;
+            bodyList = SYSTEMS[6];
+            // bodyList = EARTH_MOON_SYS;
             newCameraTarget = 3;
         } else if (bodySet === '4') {
-            bodyList = MARTIAN_SYS;
+            bodyList = SYSTEMS[7];
+            // bodyList = MARTIAN_SYS;
             newCameraTarget = 4;
         } else if (bodySet === '5') {
-            bodyList = JOVIAN_SYS;
+            bodyList = SYSTEMS[8];
+            // bodyList = JOVIAN_SYS;
             newCameraTarget = 5;
         } else if (bodySet === '6') {
-            bodyList = SATURNIAN_SYS;
+            bodyList = SYSTEMS[9];
+            // bodyList = SATURNIAN_SYS;
             newCameraTarget = 6;
         } else if (bodySet === '7') {
-            bodyList = URANIAN_SYS;
+            bodyList = SYSTEMS[10];
+            // bodyList = URANIAN_SYS;
             newCameraTarget = 7;
         } else if (bodySet === '8') {
-            bodyList = NEPTUNIAN_SYS;
+            bodyList = SYSTEMS[11];
+            // bodyList = NEPTUNIAN_SYS;
             newCameraTarget = 8;
         } else if (bodySet === '9') {
-            bodyList = PLUTONIAN_SYS;
+            bodyList = SYSTEMS[12];
+            // bodyList = PLUTONIAN_SYS;
             newCameraTarget = 9;
         }
 
