@@ -274,7 +274,6 @@ $(async function () {
             const sunLight = new THREE.PointLight(0xffffff, 1);
             sunLight.castShadow = true;
             object.add(sunLight);
-            console.log(sunLight);
             objectMesh.castShadow = false;
             objectMesh.receiveShadow = false;
             object.emissive = new THREE.Color(0xffffff);
