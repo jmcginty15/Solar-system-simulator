@@ -2,6 +2,8 @@ import * as THREE from './node_modules/three/src/Three.js';
 import { OrbitControls } from './node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { Mesh, Vector3 } from './node_modules/three/src/Three.js';
 import SYSTEMS from './query-objects.js';
+import Tree from './barnes-hut.js';
+import { Body, System } from './classes.js';
 
 $(async function () {
     // useful JQuery objects
@@ -631,55 +633,42 @@ $(async function () {
         let newCameraTarget = null;
         if (bodySet === 'full') {
             bodyList = SYSTEMS[0];
-            // bodyList = FULL;
             newCameraTarget = 0;
         } else if (bodySet === 'inner') {
             bodyList = SYSTEMS[1];
-            // bodyList = INNER;
             newCameraTarget = 0;
         } else if (bodySet === 'outer') {
             bodyList = SYSTEMS[2];
-            // bodyList = OUTER;
             newCameraTarget = 0;
         } else if (bodySet === 'planets') {
             bodyList = SYSTEMS[3];
-            // bodyList = PLANETS;
             newCameraTarget = 0;
         } else if (bodySet === 'dwarves') {
             bodyList = SYSTEMS[4];
-            // bodyList = DWARVES;
             newCameraTarget = 0;
         } else if (bodySet === 'planets-dwarves') {
             bodyList = SYSTEMS[5];
-            // bodyList = PLANETS_DWARVES;
             newCameraTarget = 0;
         } else if (bodySet === '3') {
             bodyList = SYSTEMS[6];
-            // bodyList = EARTH_MOON_SYS;
             newCameraTarget = 3;
         } else if (bodySet === '4') {
             bodyList = SYSTEMS[7];
-            // bodyList = MARTIAN_SYS;
             newCameraTarget = 4;
         } else if (bodySet === '5') {
             bodyList = SYSTEMS[8];
-            // bodyList = JOVIAN_SYS;
             newCameraTarget = 5;
         } else if (bodySet === '6') {
             bodyList = SYSTEMS[9];
-            // bodyList = SATURNIAN_SYS;
             newCameraTarget = 6;
         } else if (bodySet === '7') {
             bodyList = SYSTEMS[10];
-            // bodyList = URANIAN_SYS;
             newCameraTarget = 7;
         } else if (bodySet === '8') {
             bodyList = SYSTEMS[11];
-            // bodyList = NEPTUNIAN_SYS;
             newCameraTarget = 8;
         } else if (bodySet === '9') {
             bodyList = SYSTEMS[12];
-            // bodyList = PLUTONIAN_SYS;
             newCameraTarget = 9;
         }
 
