@@ -18,8 +18,8 @@ body {
     z-index: 0;
 }
 
-#overlay {
-    z-index: 10;
+.overlay {
+    z-index: 2147483638;
 }
 
 .control-box {
@@ -105,6 +105,8 @@ body {
 }
 
 #app-info, #development-info {
+    -webkit-transform: translate3d(0, 0, 0);
+    /* transform: translateZ(12px); */
     height: fit-content;
     width: fit-content;
     max-width: 50%;
@@ -342,4 +344,68 @@ button {
 
 #framerate-container {
     color: green;
+}
+
+.marker {
+    background: none;
+    border-width: 2px;
+    border-style: outset;
+    border-radius: 50%;
+    position: fixed;
+}
+
+.tag {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-width: 2px;
+    border-style: outset;
+    border-radius: 10px;
+    position: fixed;
+    width: fit-content;
+    height: fit-content;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 1px;
+    padding-bottom: 3px;
+}
+
+.tag:hover {
+    background-color: rgba(0, 0, 0, 0.75);
+}
+
+.name:hover {
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.symbol {
+    font-size: larger;
+}
+
+.object-name {
+    text-align: center;
+}
+
+.object-type, .object-distance {
+    text-align: left;
+    font-size: small;
+}
+
+#markers-on-off-container, #tags-on-off-container {
+    padding-top: 3px;
+}
+
+.markers-on {
+    float: right;
+    color: green;
+}
+
+.markers-off {
+    float:right;
+    color: red;
+}
+
+.markers-on:hover, .markers-off:hover {
+    text-decoration: underline;
+    cursor: pointer;
 }

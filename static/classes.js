@@ -30,6 +30,8 @@ class Body {
         this.ring_color = obj.ring_color;                   // color map texture for rings
         this.ring_transparency = obj.ring_transparency;     // alpha map texture for rings
         this.model = null;                                  // property to associate a THREE.js object when it is created
+        this.marker = null;                                 // property to associate a screen marker when it is in the camera's FOV
+        this.cameraDistance = 0;                            // object's distance from the camera
 
         if (this.available) {
             this.position = obj.position;                   // 3D position vector
@@ -88,14 +90,49 @@ class Body {
         }
     }
 
+    createMarker(camera, showTags) {
+        let color = '255, 255, 255';
+        switch (this.obj_type) {
+            case 'G-type main-sequence star':
+                color = '255, 255, 0';
+                break;
+            case 'Terrestrial planet':
+                color = '0, 255, 0';
+                break;
+            case 'Gas giant':
+                color = '255, 0, 0';
+                break;
+            case 'Ice giant':
+                color = '7, 242, 241';
+                break;
+            case 'Dwarf planet':
+                color = '0, 0, 255';
+                break;
+        }
+        this.marker = new Marker(camera, this.model.position.clone(), Math.max(...this.dimensions), this.name, this.designation, this.id, this.obj_type, this.sat_type, color, showTags);
+    }
+
+    updateMarker(camera) {
+        const position = this.model.position.clone();
+        if (this.marker !== null) this.marker.update(camera, position, Math.max(...this.dimensions));
+        else this.createMarker(camera);
+    }
+
+    destroyMarker() {
+        if (this.marker !== null) {
+            this.marker.destroy();
+            this.marker = null;
+        }
+    }
+
     getDistance(primary) {
         // calculates the object's distance to another body
-        return Math.sqrt((this.position[0] - primary.position[0])**2 + (this.position[1] - primary.position[1])**2 + (this.position[2] - primary.position[2])**2);
+        return Math.sqrt((this.position[0] - primary.position[0]) ** 2 + (this.position[1] - primary.position[1]) ** 2 + (this.position[2] - primary.position[2]) ** 2);
     }
 
     getOrbitalSpeed(primary) {
         // calculates the object's speed relative to another body
-        return Math.sqrt((this.velocity[0] - primary.velocity[0])**2 + (this.velocity[1] - primary.velocity[1])**2 + (this.velocity[2] - primary.velocity[2])**2);
+        return Math.sqrt((this.velocity[0] - primary.velocity[0]) ** 2 + (this.velocity[1] - primary.velocity[1]) ** 2 + (this.velocity[2] - primary.velocity[2]) ** 2);
     }
 
     getOrbitalParams(primary) {
@@ -230,13 +267,197 @@ class System {
 
     getDistance(primary) {
         // calculates the distance from the system barycenter to another body
-        return Math.sqrt((this.position[0] - primary.position[0])**2 + (this.position[1] - primary.position[1])**2 + (this.position[2] - primary.position[2])**2);
+        return Math.sqrt((this.position[0] - primary.position[0]) ** 2 + (this.position[1] - primary.position[1]) ** 2 + (this.position[2] - primary.position[2]) ** 2);
     }
 
     getOrbitalSpeed(primary) {
         // calculates the speed of the system barycenter relative to another body
-        return Math.sqrt((this.velocity[0] - primary.velocity[0])**2 + (this.velocity[1] - primary.velocity[1])**2 + (this.velocity[2] - primary.velocity[2])**2);
+        return Math.sqrt((this.velocity[0] - primary.velocity[0]) ** 2 + (this.velocity[1] - primary.velocity[1]) ** 2 + (this.velocity[2] - primary.velocity[2]) ** 2);
     }
+}
+
+class Marker {
+    // class to represent a screen marker to be attached to a body
+    constructor(camera, objectPosition, radius, name, designation, id, objectType, satType, color, showTags) {
+        this.x = null;
+        this.y = null;
+        this.domElement = null;
+        this.radius = 0;
+        this.cameraDistance = 0;
+        this.zIndex = 0;
+        this.opacity = 0;
+        this.color = color;
+        this.hovering = false;
+
+        const marker = document.createElement('div');
+        marker.classList.add('marker');
+        marker.id = `${id}-marker`;
+        viewport.appendChild(marker);
+        marker.addEventListener('mouseenter', () => highlight(this));
+        marker.addEventListener('mouseleave', () => unhighlight(this));
+        this.domElement = marker;
+
+        this.update(camera, objectPosition, radius);
+        const tagName = name ? name : designation;
+        const tagType = (satType && !(objectType in ['Earth', 'Pluto'])) ? satType : objectType;
+        this.tag = new Tag(tagName, id, tagType, color, this.x, this.y, this.radius, this.cameraDistance, showTags, this.zIndex, this.opacity, this);
+    }
+
+    update(camera, objectPosition, radius) {
+        const positionClone = objectPosition.clone();
+        this.setPosition(camera, objectPosition);
+        this.setDisplay(camera, positionClone, radius);
+        if (this.tag) this.tag.update(this.x, this.y, this.radius, this.cameraDistance, this.zIndex, this.opacity);
+    }
+
+    setPosition(camera, objectPosition) {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        objectPosition.project(camera);
+        this.x = (objectPosition.x + 1) * width / 2;
+        this.y = -(objectPosition.y - 1) * height / 2;
+        this.domElement.style.left = `${this.x - this.radius}px`;
+        this.domElement.style.top = `${this.y - this.radius}px`;
+    }
+
+    setDisplay(camera, objectPosition, radius) {
+        const xDist = camera.position.x - objectPosition.x;
+        const yDist = camera.position.y - objectPosition.y;
+        const zDist = camera.position.z - objectPosition.z;
+        const dist = Math.sqrt(xDist ** 2 + yDist ** 2 + zDist ** 2);
+        this.cameraDistance = dist;
+        const angularDiameter = Math.atan2(radius, 2 * dist) * 2;
+        let markerDiameter = angularDiameter * 8000;
+        if (markerDiameter < 10) markerDiameter = 10;
+
+        this.domElement.style.width = `${markerDiameter}px`;
+        this.domElement.style.height = `${markerDiameter}px`;
+        this.radius = markerDiameter / 2;
+
+        this.zIndex = Math.floor(2147483638 - (1073741819 * dist) / 15000000000000);
+        this.domElement.style.zIndex = this.zIndex;
+
+        let opacity = this.hovering ? 0.85 : 0.85 - dist / 50000000000;
+        if (opacity < 0.35) opacity = 0.35;
+        this.opacity = opacity;
+        this.domElement.style.borderColor = `rgba(${this.color}, ${opacity})`;
+    }
+
+    destroy() {
+        this.tag.destroy();
+        this.domElement.remove();
+    }
+}
+
+class Tag {
+    // class to represent a tag to be attached to a marker
+    constructor(name, id, objectType, color, markerX, markerY, markerRadius, cameraDistance, showTags, zIndex, opacity, parentMarker) {
+        let symbol = '';
+        switch (name) {
+            case 'Sun':
+                symbol = `☉`;
+                break;
+            case 'Mercury':
+                symbol = `☿`;
+                break;
+            case 'Venus':
+                symbol = `♀`;
+                break;
+            case 'Earth':
+                symbol = `🜨`;
+                break;
+            case 'Moon':
+                symbol = `☾`;
+                break;
+            case 'Mars':
+                symbol = `♂`;
+                break;
+            case 'Ceres':
+                symbol = `⚳`;
+                break;
+            case 'Jupiter':
+                symbol = `♃`;
+                break;
+            case 'Saturn':
+                symbol = `♄`;
+                break;
+            case 'Uranus':
+                symbol = `⛢`;
+                break;
+            case 'Neptune':
+                symbol = `♆`;
+                break;
+            case 'Pluto':
+                symbol = `♇`;
+                break;
+        }
+
+        this.name = name;
+        this.id = id;
+        this.color = color;
+        this.parentMarker = parentMarker;
+
+        const tag = document.createElement('div');
+        tag.classList.add('tag');
+        tag.id = `${id}-tag`;
+        tag.innerHTML = `<div class="object-name">
+                <span class="symbol">${symbol}</span> <span id="${id}-name" class="name">${name}</span>
+            </div>
+            <div class="object-type"><em>${objectType}</em></div>
+            <div class="object-distance"><em id="${name}-dist"></em></div>`;
+        if (!showTags) tag.style.display = 'none';
+        tag.addEventListener('mouseenter', () => highlight(this.parentMarker));
+        tag.addEventListener('mouseleave', () => unhighlight(this.parentMarker));
+        viewport.appendChild(tag);
+
+        this.domElement = tag;
+
+        this.setDisplay(markerX, markerY, markerRadius, cameraDistance, zIndex, opacity);
+    }
+
+    update(markerX, markerY, markerRadius, cameraDistance, zIndex, opacity) {
+        this.setDisplay(markerX, markerY, markerRadius, cameraDistance, zIndex, opacity);
+    }
+
+    setDisplay(markerX, markerY, markerRadius, cameraDistance, zIndex, opacity) {
+        this.domElement.style.borderColor = `rgba(${this.color}, ${opacity})`;
+        this.domElement.style.color = `rgba(${this.color}, ${opacity})`;
+
+        const x = markerX + markerRadius * Math.cos(Math.PI / 4);
+        const y = markerY - markerRadius * Math.sin(Math.PI / 4) - this.domElement.offsetHeight;
+        this.domElement.style.left = `${x}px`;
+        this.domElement.style.top = `${y}px`;
+        this.domElement.style.zIndex = zIndex;
+
+        const distLabel = document.getElementById(`${this.name}-dist`);
+        distLabel.innerText = this.parseDistance(cameraDistance);
+    }
+
+    parseDistance(cameraDistance) {
+        let parsedDist = cameraDistance;
+        let distLabel = '';
+        if (parsedDist >= 1e+6 && parsedDist < 1e+9) {
+            parsedDist /= 1e+6;
+            distLabel = 'million';
+        } else if (parsedDist >= 1e+9) {
+            parsedDist /= 1e+9;
+            distLabel = 'billion';
+        }
+        return `${+parsedDist.toFixed(2)} ${distLabel} km`;
+    }
+
+    destroy() {
+        this.domElement.remove();
+    }
+}
+
+function highlight(marker) {
+    marker.hovering = true;
+}
+
+function unhighlight(marker) {
+    marker.hovering = false;
 }
 
 function crossProduct(v1, v2) {
@@ -261,4 +482,4 @@ function adjustAngleRange(angle, min, max) {
     return angle;
 }
 
-export { Body, System };
+export { Body, System, Marker };

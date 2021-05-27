@@ -1,9 +1,9 @@
 import * as THREE from './node_modules/three/src/Three.js';
 import { OrbitControls } from './node_modules/three/examples/jsm/controls/OrbitControls.js';
-import { Mesh, Vector3 } from './node_modules/three/src/Three.js';
+import { Frustum, Mesh, MeshBasicMaterial, SphereGeometry, Vector3 } from './node_modules/three/src/Three.js';
 import SYSTEMS from './query-objects.js';
 import Tree from './barnes-hut.js';
-import { Body, System } from './classes.js';
+import { Body, System, Marker } from './classes.js';
 
 $(async function () {
     // useful JQuery objects
@@ -25,15 +25,19 @@ $(async function () {
     const $developmentInfo = $('#development-info');
     const $aboutLink = $('#about-link');
     const $showHideButton = $('#show-hide-button');
+    const $markersToggle = $('#markers-toggle');
+    const $tagsToggle = $('#tags-toggle');
     const $overlayClass = $('.overlay');
     const $showHideOverlay = $('#show-hide-overlay');
     const $loadingScreen = $('#loading-screen');
 
     // initialize some values we will need later
-    // const BASE_URL = 'http://127.0.0.1:5000';
-    const BASE_URL = 'https://solar-system-simulator.herokuapp.com';
+    const BASE_URL = 'http://127.0.0.1:5000';
+    // const BASE_URL = 'https://solar-system-simulator.herokuapp.com';
     let running = false;
     let overlayHidden = false;
+    let showMarkers = true;
+    let showTags = true;
     let startDate = new Date();
     let currentDate = new Date();
     let frameCountStart = new Date();
@@ -49,6 +53,8 @@ $(async function () {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.0000000001, 240000000000000);
     camera.up = new THREE.Vector3(0, 0, 1);
+    scene.add(camera);
+    const frustum = new Frustum();      // this frustum object will be used to check which objects are currently in-frame in order to tag them
     const renderer = new THREE.WebGLRenderer({ logarithmicDepthBuffer: true, physicallyCorrectLights: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     // renderer.shadowMap.enabled = true;
@@ -113,12 +119,22 @@ $(async function () {
                     }
                 }
 
+                if (showMarkers) frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
                 for (let body of simBodies) {
                     if (body.available) {
                         body.force = sysTree.getForceVector(body, threshold);
                         body.updateAcceleration();
                         body.updateVelocity(tStep);
                         body.updatePosition(tStep);
+
+                        if (body.model !== null && showMarkers) {
+                            if (frustum.intersectsObject(body.model.children[0])) {
+                                if (!body.marker) body.createMarker(camera, showTags);
+                                else body.updateMarker(camera);
+                            } else {
+                                body.destroyMarker();
+                            }
+                        }
                     }
                 }
 
@@ -134,6 +150,20 @@ $(async function () {
             }
         } else {
             delta = [0, 0, 0];
+        }
+
+        if (!running && showMarkers) {
+            frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+            for (let body of simBodies) {
+                if (body.model !== null) {
+                    if (frustum.intersectsObject(body.model.children[0])) {
+                        if (body.marker === null) body.createMarker(camera, showTags);
+                        else body.updateMarker(camera);
+                    } else {
+                        body.destroyMarker();
+                    }
+                }
+            }
         }
 
         elapsedTime = currentDate - startDate;
@@ -355,7 +385,7 @@ $(async function () {
 
         // if target is a body, set it as the camera target
         if (targetBody) {
-            // position the camera between the body and the system to give a good view
+            // position the camera between the body and the sun to give a good view
             const theta = Math.atan2(simBodies[0].position[1] - targetBody.position[1], simBodies[0].position[0] - targetBody.position[0]) - Math.PI / 4;
             const distance = avgRadius(targetBody);
             camera.position.set(targetBody.position[0] + 5 * distance * Math.cos(theta), targetBody.position[1] + 5 * distance * Math.sin(theta), targetBody.position[2] + distance);
@@ -492,6 +522,11 @@ $(async function () {
     $simSelectForm.on('submit', async function (evt) {
         evt.preventDefault();
         evt.stopPropagation();
+        
+        for (let body of simBodies) {
+            if (body.marker !== null) body.marker.destroy();
+        }
+
         running = false;
         cameraTarget = null;
         $playPauseButton.html('&#9205');
@@ -591,7 +626,84 @@ $(async function () {
             $showHideButton.text('Show overlay');
             overlayHidden = true;
         }
-    })
+    });
+
+    // event listener for showing or hiding markers
+    $markersToggle.on('click', function () {
+        if (showMarkers) {
+            showMarkers = false;
+            $markersToggle.addClass('markers-off');
+            $markersToggle.removeClass('markers-on');
+            $markersToggle.text('Off');
+
+            for (let body of simBodies) {
+                if (body.marker !== null) body.destroyMarker();
+            }
+
+            $tagsToggle.addClass('markers-off');
+            $tagsToggle.removeClass('markers-on');
+            $tagsToggle.text('Off');
+        } else {
+            showMarkers = true;
+            showTags = true;
+            $markersToggle.addClass('markers-on');
+            $markersToggle.removeClass('markers-off');
+            $markersToggle.text('On');
+            frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+
+            for (let body of simBodies) {
+                if (body.model !== null) {
+                    if (frustum.intersectsObject(body.model.children[0])) body.createMarker(camera, showTags);
+                }
+            }
+
+            $tagsToggle.addClass('markers-on');
+            $tagsToggle.removeClass('markers-off');
+            $tagsToggle.text('On');
+        }
+    });
+
+    // event listener for showing or hiding tags
+    $tagsToggle.on('click', function () {
+        if (showTags) {
+            showTags = false;
+            $tagsToggle.addClass('markers-off');
+            $tagsToggle.removeClass('markers-on');
+            $tagsToggle.text('Off');
+
+            const $tags = $('.tag');
+            $tags.hide();
+        } else if (showMarkers) {
+            showTags = true;
+            $tagsToggle.addClass('markers-on');
+            $tagsToggle.removeClass('markers-off');
+            $tagsToggle.text('On');
+
+            const $tags = $('.tag');
+            $tags.show();
+        }
+    });
+
+    // event listener for clicks on tag names
+    viewport.addEventListener('click', function (evt) {
+        if (evt.target.classList.contains('name')) {
+            const id = evt.target.id;
+            const dashIndex = id.indexOf('-');
+            const bodyId = id.slice(0, dashIndex);
+
+            cameraTarget = lookAt(parseInt(bodyId));
+            if (cameraTarget instanceof Body) {
+                const primaryId = parseInt(cameraTarget.id.toString()[0] + '99');
+                let primary = null;
+                if (cameraTarget.id != primaryId && ![10, 1, 136108, 136199, 136472].includes(cameraTarget.id)) {
+                    primary = getBodyById(primaryId);
+                }
+                updateObjectInfo(cameraTarget, simBodies[0], primary);
+            } else {
+                updateSystemInfo(cameraTarget, simBodies[0]);
+            }
+        }
+    });
 
     // function to clear all objects from scene
     function clearScene() {
