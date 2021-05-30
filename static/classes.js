@@ -305,8 +305,8 @@ class Marker {
 
     update(camera, objectPosition, radius) {
         const positionClone = objectPosition.clone();
-        this.setPosition(camera, objectPosition);
         this.setDisplay(camera, positionClone, radius);
+        this.setPosition(camera, objectPosition);
         if (this.tag) this.tag.update(this.x, this.y, this.radius, this.cameraDistance, this.zIndex, this.opacity);
     }
 
