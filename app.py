@@ -17,6 +17,7 @@ app.config['SQLALCHEMY_ECHO'] = True
 
 debug = DebugToolbarExtension(app)
 connect_db(app)
+app.app_context().push()
 db.create_all()
 
 
