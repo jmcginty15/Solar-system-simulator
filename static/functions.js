@@ -346,6 +346,9 @@ function updateObjectInfo(body, sun, primary) {
             } else if (primaryDistance >= 1e+9) {
                 primaryDistance /= 1e+9;
                 primaryDistanceLabel = ' billion';
+            } else if (primaryDistance >= 1e+12) {
+                primaryDistance /= 1e+12;
+                primaryDistanceLabel = ' trillion';
             }
             primaryDistance = +primaryDistance.toFixed(2);
 
