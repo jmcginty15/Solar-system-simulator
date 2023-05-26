@@ -211,9 +211,10 @@ $(async function () {
                         primaryDistanceLabel = ' million';
                     } else if (primaryDistance >= 1e+9) {
                         primaryDistance /= 1e+9;
-                        sunDistanceLabel = ' billion';
+                        primaryDistanceLabel = ' billion';
                     }
                     primaryDistance = +primaryDistance.toFixed(2);
+
                     $('#primary-distance').text(`${primaryDistance + primaryDistanceLabel} km`);
 
                     let speed = cameraTarget.getOrbitalSpeed(primary);
